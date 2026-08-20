@@ -138,6 +138,19 @@
   .type-line { opacity: 0; animation: reveal 0.4s ease forwards; }
   @keyframes reveal { to { opacity: 1; } }
 
+  /* Pixel bars — real boxes, not block-drawing characters (their glyph
+     metrics vary by font/fallback and don't share a baseline reliably). */
+  .pxbar { display: inline-flex; gap: 1px; vertical-align: 1px; }
+  .pxbar .c { width: 6px; height: 11px; border-radius: 1px; background: var(--border); }
+  .pxbar .c.on-green { background: var(--sem-green); }
+  .pxbar .c.on-yellow { background: var(--sem-yellow); }
+  .pxbar .c.on-red { background: var(--sem-red); }
+
+  /* Hero text reveal */
+  .type-cursor { display: inline-block; width: 7px; height: 0.85em; background: var(--accent); vertical-align: -1px; margin-left: 3px; animation: blink 0.9s step-end infinite; }
+  h1.headline { opacity: 0; transform: translateY(14px); transition: opacity .55s ease, transform .55s ease; }
+  h1.headline.shown { opacity: 1; transform: translateY(0); }
+
   /* ── Layout comparison ──────────────────────────────────────────── */
   .layout-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
   @media (max-width: 800px) { .layout-grid { grid-template-columns: 1fr; } }
@@ -154,19 +167,6 @@
   .feature ul.checks li { display: flex; gap: 10px; font-size: 14.5px; color: var(--text); }
   .feature ul.checks svg { flex-shrink: 0; margin-top: 3px; color: var(--accent); }
   .feature ul.checks code { font-size: 13px; color: var(--accent-strong); }
-
-  /* ── Security diff ──────────────────────────────────────────────── */
-  .diffgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
-  @media (max-width: 720px) { .diffgrid { grid-template-columns: 1fr; } }
-  .diffcol-label { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
-  .diffcol-label.before { color: var(--sem-red); }
-  .diffcol-label.after { color: var(--sem-green); }
-  pre.diff {
-    font-family: var(--font-mono); font-size: 12px; line-height: 1.65; margin: 0;
-    padding: 14px 16px; border-radius: 8px; overflow-x: auto; white-space: pre;
-  }
-  pre.diff.before { background: rgba(243,139,168,0.08); border: 1px solid rgba(243,139,168,0.35); color: #f2b6c6; }
-  pre.diff.after { background: rgba(166,227,161,0.08); border: 1px solid rgba(166,227,161,0.35); color: #bfe8ba; }
 
   .stat-row { display: flex; gap: 40px; margin-top: 36px; flex-wrap: wrap; }
   .stat .num { font-family: var(--font-display); font-size: 30px; font-weight: 800; color: var(--accent); }
@@ -195,20 +195,18 @@
   <div class="wordmark">fleet<span class="dot">·</span>line</div>
   <nav class="site-links">
     <a href="#install">install</a>
-    <a href="#security">security</a>
     <a href="https://github.com/haib/fleetline">github</a>
   </nav>
 </header>
 
 <section class="hero" id="intro">
   <div class="wrap">
-    <div class="eyebrow">a statusline for claude code</div>
-    <h1 class="headline">Your fleet, <span class="accent-word">one line.</span></h1>
-    <p class="lead">Model, context, git, rate limits, and how fast you're burning through your 5-hour window — plus how many background agents are actually running right now. All from a bash script that got hardened against the injection bug most statuslines ship with.</p>
+    <div class="eyebrow" id="hero-eyebrow"><span id="eyebrow-text"></span><span class="type-cursor" id="eyebrow-cursor"></span></div>
+    <h1 class="headline" id="hero-headline">Your fleet, <span class="accent-word">one line.</span></h1>
+    <p class="lead">Model, context, git, rate limits, and how fast you're burning through your 5-hour window — plus how many background agents are actually running right now, all from a hardened bash script.</p>
 
     <div class="hero-cta">
       <a class="btn primary" href="#install">Install fleetline</a>
-      <a class="btn" href="#security">Read the security writeup</a>
     </div>
 
     <div class="term hero-term" aria-label="Example fleetline output">
@@ -240,7 +238,7 @@
         <div class="term-body">
           <div class="layout-label">minimal</div>
           <div class="layout-desc">Model, context, branch. Nothing else — for people who want the line to disappear.</div>
-          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#e7e9ee;">Ctx</span> <span style="color:#a6e3a1;">[███░░░░░░░]</span> 34%/200k <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
+          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#e7e9ee;">Ctx</span> [<span class="pxbar" data-fill="3" data-color="green"></span>] 34%/200k <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
         </div>
       </div>
       <div class="term layout-card">
@@ -248,8 +246,8 @@
         <div class="term-body">
           <div class="layout-label">hardened</div>
           <div class="layout-desc">The classic layout, plus burn-rate. What most people run day to day.</div>
-          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#5b6273;">v2.1.4</span> <span style="color:#5b6273;">|</span> Ctx <span style="color:#a6e3a1;">[███░░░░░░░]</span> 34%<span style="color:#5b6273;">|</span> <span style="color:#a6e3a1;">+120</span>/<span style="color:#f38ba8;">-45</span> <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
-          <div style="margin-top:4px;"><span style="color:#5b6273;">Rate:</span> 5h:<span style="color:#f9e2af;">[███████░░░]</span> 72% <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.2/h</span></div>
+          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#5b6273;">v2.1.4</span> <span style="color:#5b6273;">|</span> Ctx [<span class="pxbar" data-fill="3" data-color="green"></span>] 34%<span style="color:#5b6273;">|</span> <span style="color:#a6e3a1;">+120</span>/<span style="color:#f38ba8;">-45</span> <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
+          <div style="margin-top:4px;"><span style="color:#5b6273;">Rate:</span> 5h:[<span class="pxbar" data-fill="7" data-color="yellow"></span>] 72% <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.2/h</span></div>
         </div>
       </div>
       <div class="term layout-card">
@@ -281,8 +279,8 @@
       <div class="term">
         <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span><span class="term-title">fleet view</span></div>
         <div class="term-body" style="font-size:12.5px;">
-          <div><span style="color:#89dceb;">refactor auth flow</span> <span style="color:#5b6273;">2m</span> <span style="color:#f38ba8;">[█████████░] 92%</span> <span style="color:#5b6273;">sonnet-5</span> <span style="color:#cba6f7;">high</span></div>
-          <div style="margin-top:8px;"><span style="color:#89dceb;">payment routing cascade</span> <span style="color:#5b6273;">4m</span> <span style="color:#a6e3a1;">[██░░░░░░░░] 20%</span> <span style="color:#5b6273;">opus-5</span> <span style="color:#cba6f7;">medium</span> <span style="color:#f38ba8;">⚠ stuck</span></div>
+          <div><span style="color:#89dceb;">refactor auth flow</span> <span style="color:#5b6273;">2m</span> [<span class="pxbar" data-fill="9" data-color="red"></span>] <span style="color:#f38ba8;">92%</span> <span style="color:#5b6273;">sonnet-5</span> <span style="color:#cba6f7;">high</span></div>
+          <div style="margin-top:8px;"><span style="color:#89dceb;">payment routing cascade</span> <span style="color:#5b6273;">4m</span> [<span class="pxbar" data-fill="2" data-color="green"></span>] <span style="color:#a6e3a1;">20%</span> <span style="color:#5b6273;">opus-5</span> <span style="color:#cba6f7;">medium</span> <span style="color:#f38ba8;">⚠ stuck</span></div>
         </div>
       </div>
     </div>
@@ -295,7 +293,7 @@
       <div class="term">
         <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span></div>
         <div class="term-body">
-          <div><span style="color:#5b6273;">Rate:</span> 5h:<span style="color:#f9e2af;">[███████░░░]</span> <span style="color:#f9e2af;">72%</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.20/h</span> <span style="color:#5b6273;">·</span> hết 5h <span style="color:#f9e2af;">~40m</span></div>
+          <div><span style="color:#5b6273;">Rate:</span> 5h:[<span class="pxbar" data-fill="7" data-color="yellow"></span>] <span style="color:#f9e2af;">72%</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.20/h</span> <span style="color:#5b6273;">·</span> hết 5h <span style="color:#f9e2af;">~40m</span></div>
           <div style="margin-top:10px;"><span style="color:#a6e3a1;">TTL:58m</span> <span class="dim">— cache còn nóng</span></div>
           <div style="margin-top:2px;"><span style="color:#f38ba8;">❄ TTL hết</span> <span class="dim">— vừa vượt cửa sổ trượt</span></div>
         </div>
@@ -308,51 +306,6 @@
           <div class="stat"><div class="num">$0.15</div><div class="lbl">spent over 91s in one real test run</div></div>
           <div class="stat"><div class="num">5.93/h</div><div class="lbl">the burn-rate segment computed from it</div></div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="security">
-  <div class="wrap">
-    <div class="eyebrow">hardened, not just hoped</div>
-    <h2 style="font-size:clamp(24px,3.4vw,32px);max-width:640px;">Two real bugs, found and fixed before this shipped.</h2>
-    <p class="lead" style="margin-top:14px;">The personal script this plugin is built from had two issues that weren't theoretical — both were reproduced and verified byte-for-byte before the fix, and both patterns are common in other statusline scripts still running unpatched today.</p>
-
-    <div class="diffgrid">
-      <div>
-        <div class="diffcol-label before">git core.fsmonitor — arbitrary command execution</div>
-        <pre class="diff before">git -C "$CWD" diff --numstat
-# a repo can set core.fsmonitor to
-# any command — it runs on every
-# refresh, forever, while cwd is
-# inside that clone</pre>
-      </div>
-      <div>
-        <div class="diffcol-label after">fixed</div>
-        <pre class="diff after">GITOPTS=(-c core.fsmonitor=
-         --no-optional-locks)
-git "${GITOPTS[@]}" -C "$CWD" \
-  diff --numstat</pre>
-      </div>
-    </div>
-
-    <div class="diffgrid" style="margin-top:16px;">
-      <div>
-        <div class="diffcol-label before">printf '%b' — ANSI / OSC injection</div>
-        <pre class="diff before">printf '%b\n' "$L1"
-# %b re-interprets backslash text
-# in session fields — a crafted
-# model name repaints the line or
-# fires an OSC-52 clipboard write</pre>
-      </div>
-      <div>
-        <div class="diffcol-label after">fixed</div>
-        <pre class="diff after">sanitize() { printf '%s' "$1" |
-  tr -d '\000-\037\177'; }
-# colors are real escape bytes,
-# set once — every other field
-# goes through %s, never %b</pre>
       </div>
     </div>
   </div>
@@ -397,15 +350,50 @@ git "${GITOPTS[@]}" -C "$CWD" \
 (function () {
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Hero terminal: type the three output lines, then let the cursor blink.
-  var lines = [
-    '[Sonnet 5] v2.1.4 | Ctx [███░░░░░░░] 34%/200k | +120/-45 | 🌿 main',
-    'Rate: 5h:[███████░░░] 72% | $1.20/h · hết 5h ~40m',
-    '$0.84 | PR #128 | bg:2 (w:1 b:1) | TTL:58m<span class="cursor"></span>'
-  ];
+  // Pixel bars: real boxes instead of block-drawing glyphs (see CSS comment).
+  function pxbarHTML(filled, total, color) {
+    var html = '';
+    for (var i = 0; i < total; i++) {
+      html += '<span class="c' + (i < filled ? ' on-' + color : '') + '"></span>';
+    }
+    return '<span class="pxbar">' + html + '</span>';
+  }
+  document.querySelectorAll('[data-fill]').forEach(function (el) {
+    el.innerHTML = pxbarHTML(
+      parseInt(el.getAttribute('data-fill'), 10),
+      parseInt(el.getAttribute('data-total') || '10', 10),
+      el.getAttribute('data-color') || 'green'
+    );
+  });
+
+  // Hero: type the eyebrow, reveal the headline, then type the terminal lines.
+  var eyebrowFull = 'a statusline for claude code';
+  var eyebrowEl = document.getElementById('eyebrow-text');
+  var cursorEl = document.getElementById('eyebrow-cursor');
+  var headlineEl = document.getElementById('hero-headline');
+  var HERO_START = 1600;
+
+  if (reduce) {
+    eyebrowEl.textContent = eyebrowFull;
+    cursorEl.style.display = 'none';
+    headlineEl.classList.add('shown');
+  } else {
+    var ci = 0;
+    (function typeEyebrow() {
+      eyebrowEl.textContent = eyebrowFull.slice(0, ci);
+      ci++;
+      if (ci <= eyebrowFull.length) {
+        setTimeout(typeEyebrow, 26);
+      } else {
+        setTimeout(function () { headlineEl.classList.add('shown'); }, 150);
+        setTimeout(function () { cursorEl.style.opacity = '0.35'; }, 700);
+      }
+    })();
+  }
+
   var colored = [
-    '<span style="color:#89dceb">[Sonnet 5]</span> <span style="color:#5b6273">v2.1.4</span> <span style="color:#5b6273">|</span> Ctx <span style="color:#a6e3a1">[███░░░░░░░]</span> 34%/200k <span style="color:#5b6273">|</span> <span style="color:#a6e3a1">+120</span>/<span style="color:#f38ba8">-45</span> <span style="color:#5b6273">|</span> 🌿 <span style="color:#a6e3a1">main</span>',
-    '<span style="color:#5b6273">Rate:</span> 5h:<span style="color:#f9e2af">[███████░░░]</span> 72% <span style="color:#5b6273">|</span> <span style="color:#5b6273">$1.20/h · hết 5h ~40m</span>',
+    '<span style="color:#89dceb">[Sonnet 5]</span> <span style="color:#5b6273">v2.1.4</span> <span style="color:#5b6273">|</span> Ctx [' + pxbarHTML(3, 10, 'green') + '] 34%/200k <span style="color:#5b6273">|</span> <span style="color:#a6e3a1">+120</span>/<span style="color:#f38ba8">-45</span> <span style="color:#5b6273">|</span> 🌿 <span style="color:#a6e3a1">main</span>',
+    '<span style="color:#5b6273">Rate:</span> 5h:[' + pxbarHTML(7, 10, 'yellow') + '] 72% <span style="color:#5b6273">|</span> <span style="color:#5b6273">$1.20/h · hết 5h ~40m</span>',
     '<span style="color:#e7e9ee">$0.84</span> <span style="color:#5b6273">|</span> <span style="color:#89dceb">PR #128</span> <span style="color:#5b6273">|</span> <span style="color:#5b6273">bg:</span>2 (w:1 b:1) <span style="color:#5b6273">|</span> <span style="color:#a6e3a1">TTL:58m</span><span class="cursor"></span>'
   ];
   var ids = ['hl1', 'hl2', 'hl3'];
@@ -417,7 +405,7 @@ git "${GITOPTS[@]}" -C "$CWD" \
       setTimeout(function () {
         el.innerHTML = colored[i];
         el.classList.add('type-line');
-      }, 260 * (i + 1) + 200);
+      }, 260 * (i + 1) + HERO_START);
     });
   }
 
