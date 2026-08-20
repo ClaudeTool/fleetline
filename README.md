@@ -89,7 +89,7 @@ Not a real cache-hit gauge — Claude Code's statusline payload doesn't expose c
 
 ## Fleet view: `bin/subagent-statusline.sh`
 
-A second, independent settings key (`subagentStatusLine`, distinct from `statusLine`) that renders rows in Claude Code's multi-agent/fleet view instead of the main terminal line. Shows, per background task: elapsed time, a context-usage bar (red past `thresholds.crit`), model, effort, and a "⚠ kẹt" / `[STUCK]` marker once a task has stayed blocked for over 2 minutes.
+A second, independent settings key (`subagentStatusLine`, distinct from `statusLine`) that renders rows in Claude Code's multi-agent/fleet view instead of the main terminal line. Shows, per background task: elapsed time, a context-usage bar (red past `thresholds.crit`), model, effort, and a "⚠ stuck" / `[STUCK]` marker once a task has stayed blocked for over 2 minutes.
 
 **This is the least-verified part of the plugin.** It was built from documented field names (`id, name, type, status, description, label, startTime, model, effort, contextWindowSize, tokenCount, tokenSamples, cwd`) and tested only against synthetic payloads matching that shape — there was no live multi-agent fleet session available to capture a real one. The `status` enum values in particular aren't confirmed, so the stuck-agent match is a loose substring check (`*block*`/`*wait*`), not an exact string. Report back if the real payload differs.
 

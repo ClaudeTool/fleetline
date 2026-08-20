@@ -69,7 +69,7 @@ while IFS= read -r task; do
             if [ -n "$PREV_TS" ]; then
                 AGE_MS=$(( NOW_MS - PREV_TS ))
                 if [ "$AGE_MS" -ge "$STUCK_AFTER_MS" ]; then
-                    if [ "$ASCII" = "true" ]; then STUCK=" ${RED}[STUCK]${RESET}"; else STUCK=" ${RED}⚠ kẹt${RESET}"; fi
+                    if [ "$ASCII" = "true" ]; then STUCK=" ${RED}[STUCK]${RESET}"; else STUCK=" ${RED}⚠ stuck${RESET}"; fi
                 fi
                 NEW_BLOCKED=$(printf '%s' "$NEW_BLOCKED" | jq --arg id "$TID" --argjson ts "$PREV_TS" '.[$id]=$ts' 2>/dev/null)
             else

@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fleetline</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314161c'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='18' font-weight='700' fill='%235fe6c4' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
+<meta name="description" content="A statusline for Claude Code that tracks background agents, predicts when your rate limit runs out, and was hardened against the injection bug most statuslines ship with.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14161c;
+    --surface: #1a1d25;
+    --surface-2: #20242e;
+    --border: #2b303c;
+    --text: #e7e9ee;
+    --muted: #8b93a3;
+    --muted-2: #5b6273;
+    --accent: #5fe6c4;
+    --accent-strong: #8ff0d6;
+    --accent-dim: #2f8f79;
+    --sem-green: #a6e3a1;
+    --sem-yellow: #f9e2af;
+    --sem-red: #f38ba8;
+    --sem-magenta: #cba6f7;
+    --sem-cyan: #89dceb;
+    --font-display: 'Martian Mono', 'IBM Plex Mono', ui-monospace, monospace;
+    --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+    --maxw: 920px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+  a { color: var(--accent-strong); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  ::selection { background: var(--accent-dim); color: #fff; }
+
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+  code, .mono { font-family: var(--font-mono); }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 14px;
+  }
+  section { padding: 84px 0; border-top: 1px solid var(--border); }
+  section:first-of-type { border-top: none; }
+  p.lead { font-size: 17px; color: var(--muted); max-width: 620px; line-height: 1.7; }
+
+  /* ── Meta statusline: a live nod to the product itself ─────────────── */
+  #metabar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-mono); font-size: 12px;
+    background: rgba(20, 22, 28, 0.92); backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px; white-space: nowrap; overflow-x: auto;
+  }
+  #metabar .seg { color: var(--muted); flex-shrink: 0; }
+  #metabar .sep { color: var(--muted-2); }
+  #metabar .bar { display: inline-flex; gap: 1px; }
+  #metabar .cell { width: 6px; height: 11px; background: var(--border); border-radius: 1px; }
+  #metabar .cell.on { background: var(--accent); }
+  #metabar .pct { color: var(--accent-strong); font-weight: 600; }
+  #metabar .section-name { color: var(--text); }
+
+  header.site {
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: var(--maxw); margin: 0 auto; padding: 20px 24px 0;
+  }
+  .wordmark { font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: var(--text); }
+  .wordmark .dot { color: var(--accent); }
+  nav.site-links { display: flex; gap: 22px; font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+  nav.site-links a { color: var(--muted); }
+  nav.site-links a:hover { color: var(--accent-strong); }
+
+  /* ── Hero ────────────────────────────────────────────────────────── */
+  .hero { padding-top: 64px; padding-bottom: 72px; }
+  .hero .wrap { display: flex; flex-direction: column; gap: 34px; }
+  h1.headline { font-size: clamp(34px, 5.6vw, 58px); line-height: 1.06; }
+  h1.headline .accent-word { color: var(--accent); }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn {
+    font-family: var(--font-mono); font-size: 13.5px; font-weight: 500;
+    padding: 11px 18px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); cursor: pointer; transition: border-color .15s, color .15s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover { border-color: var(--accent-dim); color: var(--accent-strong); text-decoration: none; }
+  .btn.primary { background: var(--accent); color: #0d1310; border-color: var(--accent); font-weight: 600; }
+  .btn.primary:hover { background: var(--accent-strong); color: #0d1310; }
+
+  .installblock {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; font-family: var(--font-mono); font-size: 13.5px; max-width: 560px;
+  }
+  .installblock code { color: var(--sem-cyan); overflow-x: auto; }
+  .copybtn {
+    flex-shrink: 0; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px;
+    padding: 5px 9px; cursor: pointer;
+  }
+  .copybtn:hover { color: var(--accent-strong); border-color: var(--accent-dim); }
+  .copybtn.copied { color: var(--sem-green); border-color: var(--sem-green); }
+
+  /* ── Terminal window chrome — the primary visual motif throughout ── */
+  .term {
+    background: #0e1015; border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; box-shadow: 0 24px 60px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar { display: flex; align-items: center; gap: 7px; padding: 10px 14px; background: #171a21; border-bottom: 1px solid var(--border); }
+  .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .term-dot.r { background: #f38ba8; } .term-dot.y { background: #f9e2af; } .term-dot.g { background: #a6e3a1; }
+  .term-title { margin-left: 8px; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-2); }
+  .term-body { padding: 20px 18px; font-family: var(--font-mono); font-size: 13px; line-height: 1.9; }
+  .term-body .dim { color: var(--muted-2); }
+  .term-line { min-height: 1.9em; }
+
+  .hero-term { width: 100%; }
+  .hero-term .term-body .ghost { color: var(--muted-2); }
+  .cursor { display: inline-block; width: 7px; height: 1em; background: var(--accent); vertical-align: -2px; animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .type-line { opacity: 0; animation: reveal 0.4s ease forwards; }
+  @keyframes reveal { to { opacity: 1; } }
+
+  /* ── Layout comparison ──────────────────────────────────────────── */
+  .layout-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
+  @media (max-width: 800px) { .layout-grid { grid-template-columns: 1fr; } }
+  .layout-card .term-body { font-size: 12px; padding: 16px 14px; }
+  .layout-label { font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; color: var(--accent-strong); margin-bottom: 4px; }
+  .layout-desc { font-size: 13.5px; color: var(--muted); margin-bottom: 14px; line-height: 1.55; }
+
+  /* ── Feature sections: label + copy on one side, term mockup on other ── */
+  .feature { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+  @media (max-width: 800px) { .feature { grid-template-columns: 1fr; gap: 32px; } }
+  .feature.reverse .feature-copy { order: 2; }
+  .feature h2 { font-size: clamp(24px, 3.4vw, 32px); margin-bottom: 16px; }
+  .feature ul.checks { list-style: none; margin: 20px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .feature ul.checks li { display: flex; gap: 10px; font-size: 14.5px; color: var(--text); }
+  .feature ul.checks svg { flex-shrink: 0; margin-top: 3px; color: var(--accent); }
+  .feature ul.checks code { font-size: 13px; color: var(--accent-strong); }
+
+  /* ── Security diff ──────────────────────────────────────────────── */
+  .diffgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+  @media (max-width: 720px) { .diffgrid { grid-template-columns: 1fr; } }
+  .diffcol-label { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .diffcol-label.before { color: var(--sem-red); }
+  .diffcol-label.after { color: var(--sem-green); }
+  pre.diff {
+    font-family: var(--font-mono); font-size: 12px; line-height: 1.65; margin: 0;
+    padding: 14px 16px; border-radius: 8px; overflow-x: auto; white-space: pre;
+  }
+  pre.diff.before { background: rgba(243,139,168,0.08); border: 1px solid rgba(243,139,168,0.35); color: #f2b6c6; }
+  pre.diff.after { background: rgba(166,227,161,0.08); border: 1px solid rgba(166,227,161,0.35); color: #bfe8ba; }
+
+  .stat-row { display: flex; gap: 40px; margin-top: 36px; flex-wrap: wrap; }
+  .stat .num { font-family: var(--font-display); font-size: 30px; font-weight: 800; color: var(--accent); }
+  .stat .lbl { font-size: 13px; color: var(--muted); margin-top: 4px; max-width: 190px; }
+
+  footer.site { padding: 56px 0 72px; }
+  footer.site .wrap { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+  footer.site .meta { font-size: 13px; color: var(--muted-2); font-family: var(--font-mono); }
+  footer.site .meta a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div id="metabar">
+  <span class="seg mono">[fleetline]</span>
+  <span class="sep">|</span>
+  <span class="seg">scroll</span>
+  <span class="bar" id="metabar-bar" aria-hidden="true"></span>
+  <span class="pct" id="metabar-pct">0%</span>
+  <span class="sep">|</span>
+  <span class="seg">reading:</span>
+  <span class="section-name" id="metabar-section">intro</span>
+</div>
+
+<header class="site">
+  <div class="wordmark">fleet<span class="dot">·</span>line</div>
+  <nav class="site-links">
+    <a href="#install">install</a>
+    <a href="#security">security</a>
+    <a href="https://github.com/haib/fleetline">github</a>
+  </nav>
+</header>
+
+<section class="hero" id="intro">
+  <div class="wrap">
+    <div class="eyebrow">a statusline for claude code</div>
+    <h1 class="headline">Your fleet, <span class="accent-word">one line.</span></h1>
+    <p class="lead">Model, context, git, rate limits, and how fast you're burning through your 5-hour window — plus how many background agents are actually running right now. All from a bash script that got hardened against the injection bug most statuslines ship with.</p>
+
+    <div class="hero-cta">
+      <a class="btn primary" href="#install">Install fleetline</a>
+      <a class="btn" href="#security">Read the security writeup</a>
+    </div>
+
+    <div class="term hero-term" aria-label="Example fleetline output">
+      <div class="term-bar">
+        <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+        <span class="term-title">~/glodipay — claude</span>
+      </div>
+      <div class="term-body" id="hero-term-body">
+        <div class="term-line dim">&gt; explain the auth flow in AuthService.php</div>
+        <div class="term-line dim">⋮</div>
+        <div class="term-line" style="height:1px;background:#242833;margin:10px 0;"></div>
+        <div class="term-line" id="hl1"></div>
+        <div class="term-line" id="hl2"></div>
+        <div class="term-line" id="hl3"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="layouts">
+  <div class="wrap">
+    <div class="eyebrow">three layouts</div>
+    <h2 style="font-size:clamp(24px,3.4vw,32px);max-width:560px;">Pick how much of it you want to see.</h2>
+    <p class="lead" style="margin-top:14px;">Set once in <code>/statusline-setup</code>, or edit the config file directly. Nothing here reflows the terminal — narrow window, and the least-important segments drop themselves before the line wraps.</p>
+
+    <div class="layout-grid">
+      <div class="term layout-card">
+        <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span></div>
+        <div class="term-body">
+          <div class="layout-label">minimal</div>
+          <div class="layout-desc">Model, context, branch. Nothing else — for people who want the line to disappear.</div>
+          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#e7e9ee;">Ctx</span> <span style="color:#a6e3a1;">[███░░░░░░░]</span> 34%/200k <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
+        </div>
+      </div>
+      <div class="term layout-card">
+        <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span></div>
+        <div class="term-body">
+          <div class="layout-label">hardened</div>
+          <div class="layout-desc">The classic layout, plus burn-rate. What most people run day to day.</div>
+          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#5b6273;">v2.1.4</span> <span style="color:#5b6273;">|</span> Ctx <span style="color:#a6e3a1;">[███░░░░░░░]</span> 34%<span style="color:#5b6273;">|</span> <span style="color:#a6e3a1;">+120</span>/<span style="color:#f38ba8;">-45</span> <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
+          <div style="margin-top:4px;"><span style="color:#5b6273;">Rate:</span> 5h:<span style="color:#f9e2af;">[███████░░░]</span> 72% <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.2/h</span></div>
+        </div>
+      </div>
+      <div class="term layout-card">
+        <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span></div>
+        <div class="term-body">
+          <div class="layout-label">power</div>
+          <div class="layout-desc">Adds cost, PR state, effort, background agents, cache-TTL — a 3rd line, only when there's something to show.</div>
+          <div style="color:#5b6273;">…same as hardened, plus:</div>
+          <div><span style="color:#e7e9ee;">$0.84</span> <span style="color:#5b6273;">|</span> <span style="color:#89dceb;">PR #128</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">bg:</span>2 <span style="color:#5b6273;">|</span> <span style="color:#a6e3a1;">TTL:58m</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="fleet">
+  <div class="wrap">
+    <div class="feature">
+      <div class="feature-copy">
+        <div class="eyebrow">background agents</div>
+        <h2>Know what your fleet is doing without switching windows.</h2>
+        <p class="lead">Dispatch a few background sessions and it's easy to lose track of which one's still working and which one's stuck waiting on you. fleetline can show a live count right in your main line, and ships a second renderer for Claude Code's fleet view itself.</p>
+        <ul class="checks">
+          <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Reads <code class="mono">claude agents --json</code> — throttled, so it never blocks your render on a slow poll.</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Optional hook-based counter fills the gap between polls with an approximate <code class="mono">~N</code>.</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Fleet-view rows flag a task red once it's past your context threshold, and mark one "stuck" after 2 minutes blocked.</span></li>
+        </ul>
+      </div>
+      <div class="term">
+        <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span><span class="term-title">fleet view</span></div>
+        <div class="term-body" style="font-size:12.5px;">
+          <div><span style="color:#89dceb;">refactor auth flow</span> <span style="color:#5b6273;">2m</span> <span style="color:#f38ba8;">[█████████░] 92%</span> <span style="color:#5b6273;">sonnet-5</span> <span style="color:#cba6f7;">high</span></div>
+          <div style="margin-top:8px;"><span style="color:#89dceb;">payment routing cascade</span> <span style="color:#5b6273;">4m</span> <span style="color:#a6e3a1;">[██░░░░░░░░] 20%</span> <span style="color:#5b6273;">opus-5</span> <span style="color:#cba6f7;">medium</span> <span style="color:#f38ba8;">⚠ stuck</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="burn">
+  <div class="wrap">
+    <div class="feature reverse">
+      <div class="term">
+        <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span></div>
+        <div class="term-body">
+          <div><span style="color:#5b6273;">Rate:</span> 5h:<span style="color:#f9e2af;">[███████░░░]</span> <span style="color:#f9e2af;">72%</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.20/h</span> <span style="color:#5b6273;">·</span> hết 5h <span style="color:#f9e2af;">~40m</span></div>
+          <div style="margin-top:10px;"><span style="color:#a6e3a1;">TTL:58m</span> <span class="dim">— cache còn nóng</span></div>
+          <div style="margin-top:2px;"><span style="color:#f38ba8;">❄ TTL hết</span> <span class="dim">— vừa vượt cửa sổ trượt</span></div>
+        </div>
+      </div>
+      <div class="feature-copy">
+        <div class="eyebrow">burn-rate &amp; cache-ttl</div>
+        <h2>See it running out before it runs out.</h2>
+        <p class="lead">Two samples of your cost and rate-limit usage, at least 30 seconds apart, are enough to compute a real velocity — dollars per hour, and how many minutes until your 5-hour window is gone. The TTL segment tracks how long since your last turn against Anthropic's documented cache window: 60 minutes on a subscription, 5 on an API key.</p>
+        <div class="stat-row">
+          <div class="stat"><div class="num">$0.15</div><div class="lbl">spent over 91s in one real test run</div></div>
+          <div class="stat"><div class="num">5.93/h</div><div class="lbl">the burn-rate segment computed from it</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="security">
+  <div class="wrap">
+    <div class="eyebrow">hardened, not just hoped</div>
+    <h2 style="font-size:clamp(24px,3.4vw,32px);max-width:640px;">Two real bugs, found and fixed before this shipped.</h2>
+    <p class="lead" style="margin-top:14px;">The personal script this plugin is built from had two issues that weren't theoretical — both were reproduced and verified byte-for-byte before the fix, and both patterns are common in other statusline scripts still running unpatched today.</p>
+
+    <div class="diffgrid">
+      <div>
+        <div class="diffcol-label before">git core.fsmonitor — arbitrary command execution</div>
+        <pre class="diff before">git -C "$CWD" diff --numstat
+# a repo can set core.fsmonitor to
+# any command — it runs on every
+# refresh, forever, while cwd is
+# inside that clone</pre>
+      </div>
+      <div>
+        <div class="diffcol-label after">fixed</div>
+        <pre class="diff after">GITOPTS=(-c core.fsmonitor=
+         --no-optional-locks)
+git "${GITOPTS[@]}" -C "$CWD" \
+  diff --numstat</pre>
+      </div>
+    </div>
+
+    <div class="diffgrid" style="margin-top:16px;">
+      <div>
+        <div class="diffcol-label before">printf '%b' — ANSI / OSC injection</div>
+        <pre class="diff before">printf '%b\n' "$L1"
+# %b re-interprets backslash text
+# in session fields — a crafted
+# model name repaints the line or
+# fires an OSC-52 clipboard write</pre>
+      </div>
+      <div>
+        <div class="diffcol-label after">fixed</div>
+        <pre class="diff after">sanitize() { printf '%s' "$1" |
+  tr -d '\000-\037\177'; }
+# colors are real escape bytes,
+# set once — every other field
+# goes through %s, never %b</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="eyebrow">get it running</div>
+    <h2 style="font-size:clamp(24px,3.4vw,32px);">Two ways in, both fast.</h2>
+
+    <div style="margin-top:32px; display:flex; flex-direction:column; gap:24px; max-width:640px;">
+      <div>
+        <div class="layout-label" style="margin-bottom:8px;">via the plugin marketplace</div>
+        <div class="installblock">
+          <code id="cmd-plugin">/plugin marketplace add haib/fleetline
+/plugin install fleetline
+/statusline-setup</code>
+          <button class="copybtn" data-copy-target="cmd-plugin">copy</button>
+        </div>
+      </div>
+      <div>
+        <div class="layout-label" style="margin-bottom:8px;">via curl, no marketplace</div>
+        <div class="installblock">
+          <code id="cmd-curl">curl -fsSL https://raw.githubusercontent.com/haib/fleetline/main/install.sh | bash</code>
+          <button class="copybtn" data-copy-target="cmd-curl">copy</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="lead" style="margin-top:28px;">Full config reference, the fleet-view caveats, and what a statusline genuinely can't see about your session (permission mode, notifications, auto-compact) are all in the <a href="https://github.com/haib/fleetline#readme">README</a>.</p>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="wordmark">fleet<span class="dot">·</span>line</div>
+    <div class="meta">MIT licensed · <a href="https://github.com/haib/fleetline">github.com/haib/fleetline</a></div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Hero terminal: type the three output lines, then let the cursor blink.
+  var lines = [
+    '[Sonnet 5] v2.1.4 | Ctx [███░░░░░░░] 34%/200k | +120/-45 | 🌿 main',
+    'Rate: 5h:[███████░░░] 72% | $1.20/h · hết 5h ~40m',
+    '$0.84 | PR #128 | bg:2 (w:1 b:1) | TTL:58m<span class="cursor"></span>'
+  ];
+  var colored = [
+    '<span style="color:#89dceb">[Sonnet 5]</span> <span style="color:#5b6273">v2.1.4</span> <span style="color:#5b6273">|</span> Ctx <span style="color:#a6e3a1">[███░░░░░░░]</span> 34%/200k <span style="color:#5b6273">|</span> <span style="color:#a6e3a1">+120</span>/<span style="color:#f38ba8">-45</span> <span style="color:#5b6273">|</span> 🌿 <span style="color:#a6e3a1">main</span>',
+    '<span style="color:#5b6273">Rate:</span> 5h:<span style="color:#f9e2af">[███████░░░]</span> 72% <span style="color:#5b6273">|</span> <span style="color:#5b6273">$1.20/h · hết 5h ~40m</span>',
+    '<span style="color:#e7e9ee">$0.84</span> <span style="color:#5b6273">|</span> <span style="color:#89dceb">PR #128</span> <span style="color:#5b6273">|</span> <span style="color:#5b6273">bg:</span>2 (w:1 b:1) <span style="color:#5b6273">|</span> <span style="color:#a6e3a1">TTL:58m</span><span class="cursor"></span>'
+  ];
+  var ids = ['hl1', 'hl2', 'hl3'];
+  if (reduce) {
+    ids.forEach(function (id, i) { document.getElementById(id).innerHTML = colored[i]; });
+  } else {
+    ids.forEach(function (id, i) {
+      var el = document.getElementById(id);
+      setTimeout(function () {
+        el.innerHTML = colored[i];
+        el.classList.add('type-line');
+      }, 260 * (i + 1) + 200);
+    });
+  }
+
+  // Copy buttons
+  document.querySelectorAll('.copybtn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = document.getElementById(btn.getAttribute('data-copy-target'));
+      var text = target.innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        var orig = btn.textContent;
+        btn.textContent = 'copied';
+        btn.classList.add('copied');
+        setTimeout(function () { btn.textContent = orig; btn.classList.remove('copied'); }, 1600);
+      });
+    });
+  });
+
+  // Meta statusline: scroll progress + current section, styled like the product.
+  var barEl = document.getElementById('metabar-bar');
+  var pctEl = document.getElementById('metabar-pct');
+  var nameEl = document.getElementById('metabar-section');
+  var CELLS = 10;
+  for (var i = 0; i < CELLS; i++) {
+    var c = document.createElement('span');
+    c.className = 'cell';
+    barEl.appendChild(c);
+  }
+  var cells = barEl.querySelectorAll('.cell');
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section[id]'));
+
+  function onScroll() {
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - doc.clientHeight;
+    var pct = max > 0 ? Math.round((window.scrollY / max) * 100) : 0;
+    pctEl.textContent = pct + '%';
+    var filled = Math.round((pct / 100) * CELLS);
+    cells.forEach(function (c, i) { c.classList.toggle('on', i < filled); });
+
+    var current = sections[0];
+    for (var s = 0; s < sections.length; s++) {
+      if (sections[s].getBoundingClientRect().top < window.innerHeight * 0.5) current = sections[s];
+    }
+    nameEl.textContent = current ? current.id : 'intro';
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+
+</body>
+</html>
