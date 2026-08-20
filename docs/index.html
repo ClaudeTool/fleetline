@@ -131,12 +131,13 @@
   .term-body .dim { color: var(--muted-2); }
   .term-line { min-height: 1.9em; }
 
-  .hero-term { width: 100%; }
-  .hero-term .term-body .ghost { color: var(--muted-2); }
-  .cursor { display: inline-block; width: 7px; height: 1em; background: var(--accent); vertical-align: -2px; animation: blink 1s step-end infinite; }
   @keyframes blink { 50% { opacity: 0; } }
-  .type-line { opacity: 0; animation: reveal 0.4s ease forwards; }
-  @keyframes reveal { to { opacity: 1; } }
+
+  .hero-shot {
+    border-radius: 10px; overflow: hidden; border: 1px solid var(--border);
+    box-shadow: 0 24px 60px -20px rgba(0,0,0,0.6);
+  }
+  .hero-shot img { display: block; width: 100%; height: auto; }
 
   /* Pixel bars — real boxes, not block-drawing characters (their glyph
      metrics vary by font/fallback and don't share a baseline reliably). */
@@ -209,19 +210,9 @@
       <a class="btn primary" href="#install">Install fleetline</a>
     </div>
 
-    <div class="term hero-term" aria-label="Example fleetline output">
-      <div class="term-bar">
-        <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
-        <span class="term-title">~/glodipay — claude</span>
-      </div>
-      <div class="term-body" id="hero-term-body">
-        <div class="term-line dim">&gt; explain the auth flow in AuthService.php</div>
-        <div class="term-line dim">⋮</div>
-        <div class="term-line" style="height:1px;background:#242833;margin:10px 0;"></div>
-        <div class="term-line" id="hl1"></div>
-        <div class="term-line" id="hl2"></div>
-        <div class="term-line" id="hl3"></div>
-      </div>
+    <div class="hero-shot">
+      <img src="hero.png" width="1078" height="328" loading="eager" decoding="async"
+           alt="A real Claude Code session with the fleetline statusline rendered at the bottom: model, context usage, git branch, 5h/all-models rate-limit bars, and auto mode on.">
     </div>
   </div>
 </section>
@@ -351,20 +342,14 @@
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Pixel bars: real boxes instead of block-drawing glyphs (see CSS comment).
-  // Two helpers: pxbarCellsHTML for a `[data-fill]` placeholder that is
-  // ALREADY the ".pxbar aria-hidden" wrapper (only its cells need filling
-  // in, or it'd end up double-wrapped), and pxbarHTML for building a whole
-  // bar — wrapper included — inline inside a JS-built string (the hero's
-  // `colored[]` lines, which have no pre-existing element to fill).
+  // Fills an existing `[data-fill]` placeholder — already the ".pxbar
+  // aria-hidden" wrapper, only its cells need filling in.
   function pxbarCellsHTML(filled, total, color) {
     var html = '';
     for (var i = 0; i < total; i++) {
       html += '<span class="c' + (i < filled ? ' on-' + color : '') + '"></span>';
     }
     return html;
-  }
-  function pxbarHTML(filled, total, color) {
-    return '<span class="pxbar" aria-hidden="true">' + pxbarCellsHTML(filled, total, color) + '</span>';
   }
   document.querySelectorAll('[data-fill]').forEach(function (el) {
     el.innerHTML = pxbarCellsHTML(
@@ -374,12 +359,11 @@
     );
   });
 
-  // Hero: type the eyebrow, reveal the headline, then type the terminal lines.
+  // Hero: type the eyebrow, then reveal the headline.
   var eyebrowFull = 'a statusline for claude code';
   var eyebrowEl = document.getElementById('eyebrow-text');
   var cursorEl = document.getElementById('eyebrow-cursor');
   var headlineEl = document.getElementById('hero-headline');
-  var HERO_START = 1600;
 
   if (reduce) {
     eyebrowEl.textContent = eyebrowFull;
@@ -397,24 +381,6 @@
         setTimeout(function () { cursorEl.style.opacity = '0.35'; }, 700);
       }
     })();
-  }
-
-  var colored = [
-    '<span style="color:#89dceb">[Sonnet 5]</span> <span style="color:#5b6273">v2.1.4</span> <span style="color:#5b6273">|</span> Ctx [' + pxbarHTML(3, 10, 'green') + '] 34%/200k <span style="color:#5b6273">|</span> <span style="color:#a6e3a1">+120</span>/<span style="color:#f38ba8">-45</span> <span style="color:#5b6273">|</span> 🌿 <span style="color:#a6e3a1">main</span>',
-    '<span style="color:#5b6273">Rate:</span> 5h:[' + pxbarHTML(7, 10, 'yellow') + '] 72% <span style="color:#5b6273">|</span> <span style="color:#5b6273">$1.20/h · 5h out in ~40m</span>',
-    '<span style="color:#e7e9ee">$0.84</span> <span style="color:#5b6273">|</span> <span style="color:#89dceb">PR #128</span> <span style="color:#5b6273">|</span> <span style="color:#5b6273">bg:</span>2 (w:1 b:1) <span style="color:#5b6273">|</span> <span style="color:#a6e3a1">TTL:58m</span><span class="cursor"></span>'
-  ];
-  var ids = ['hl1', 'hl2', 'hl3'];
-  if (reduce) {
-    ids.forEach(function (id, i) { document.getElementById(id).innerHTML = colored[i]; });
-  } else {
-    ids.forEach(function (id, i) {
-      var el = document.getElementById(id);
-      setTimeout(function () {
-        el.innerHTML = colored[i];
-        el.classList.add('type-line');
-      }, 260 * (i + 1) + HERO_START);
-    });
   }
 
   // Copy buttons
