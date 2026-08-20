@@ -1,0 +1,21 @@
+{
+  "description": "Maintains an approximate background-subagent counter for the bg-agent statusline segment. Only takes effect if agents.hookCounterEnabled is set in the plugin's config file, and only loads on a fresh Claude Code session (hooks load at session start).",
+  "hooks": {
+    "SubagentStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-count.sh start", "timeout": 5 }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-count.sh stop", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}

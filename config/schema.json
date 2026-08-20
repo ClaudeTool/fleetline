@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "claude-statusline config",
-  "description": "Lives at ~/.claude/statusline-claude-statusline.config.json (or $STATUSLINE_CONFIG). Outside the plugin directory on purpose — a plugin update never touches it.",
+  "title": "fleetline config",
+  "description": "Lives at ~/.claude/statusline-fleetline.config.json (or $STATUSLINE_CONFIG). Outside the plugin directory on purpose — a plugin update never touches it. Shared by bin/statusline.sh and bin/subagent-statusline.sh (which only reads asciiMode/thresholds).",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -9,12 +9,12 @@
       "type": "string",
       "enum": ["minimal", "hardened", "power"],
       "default": "hardened",
-      "description": "minimal = 1 line (model/context/git). hardened = 2 lines, matches the original model/context/lines/git + rate-limits layout. power = adds a 3rd line with cost/session/PR/effort/thinking/cache-TTL, each shown only when the underlying field is present in that turn's payload."
+      "description": "minimal = 1 line (model/context/git). hardened = 2 lines, matches the original model/context/lines/git + rate-limits layout. power = adds a 3rd line with cost/session/PR/effort/thinking/bg-agents/cache-TTL, each shown only when the underlying field is present in that turn's payload."
     },
     "asciiMode": {
       "type": "boolean",
       "default": false,
-      "description": "true replaces block-bar characters (█░) and emoji (🌿⬡⚠) with plain ASCII (#-, git:/wt:/!), for terminals/fonts without Unicode or Nerd Font glyph support."
+      "description": "true replaces block-bar characters (█░) and emoji (🌿⬡⚠❄) with plain ASCII, for terminals/fonts without Unicode or Nerd Font glyph support. Also affects subagent-statusline.sh's stuck-agent marker."
     },
     "thresholds": {
       "type": "object",
@@ -23,7 +23,7 @@
         "warn": { "type": "integer", "minimum": 0, "maximum": 100, "default": 70 },
         "crit": { "type": "integer", "minimum": 0, "maximum": 100, "default": 90 }
       },
-      "description": "Percentage thresholds shared by the context bar and both rate-limit bars: below warn = green, [warn,crit) = yellow, >= crit = red."
+      "description": "Percentage thresholds shared by the context bar, both rate-limit bars, and each per-task context bar in the fleet view: below warn = green, [warn,crit) = yellow, >= crit = red."
     },
     "hints": {
       "type": "object",
@@ -33,6 +33,77 @@
           "type": "boolean",
           "default": true,
           "description": "When context% >= thresholds.crit, append a red '· /compact?' suffix to the context segment, in every layout."
+        },
+        "idleThresholdMin": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Minutes of no new turn before the idle indicator shows (see features.idleIndicator). Not used if that feature is off."
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Small, independent toggles, all on hardened/power only (minimal always stays exactly model+context+git). NOTE: every boolean here MUST be read via the cfg_bool helper in lib.sh, never jq's `//` — jq treats a stored `false` as falsy too, so `.features.x // true` would silently discard an explicit false.",
+      "properties": {
+        "burnRate": {
+          "type": "boolean",
+          "default": true,
+          "description": "$/hour + an ETA to exhaust the 5h rate-limit window, derived from two samples of cost.total_cost_usd/rate_limits.five_hour at least 30s apart (state kept per session_id). Shows nothing until a second sample exists."
+        },
+        "idleIndicator": {
+          "type": "boolean",
+          "default": true,
+          "description": "Shows 'idle Nm' once no new turn (by prompt_id) has started for hints.idleThresholdMin minutes — useful with several terminals/sessions open."
+        },
+        "widthAwareTruncate": {
+          "type": "boolean",
+          "default": true,
+          "description": "If a rendered line would exceed the terminal width ($COLUMNS, else `tput cols`, else 120 as a last resort), drop the least-important pieces from the end instead of letting the terminal hard-wrap mid-line. Order dropped first: idle indicator, vim mode, output style, add-dir count, worktree (line 1); cache-TTL, bg-agents, thinking, session name (line 3)."
+        },
+        "outputStyleSegment": {
+          "type": "boolean",
+          "default": true,
+          "description": "Shows 'style:<output_style.name>' when present in the payload."
+        },
+        "vimModeSegment": {
+          "type": "boolean",
+          "default": true,
+          "description": "Shows 'vim:<NORMAL|INSERT>' when vim.mode is present in the payload."
+        },
+        "addDirSegment": {
+          "type": "boolean",
+          "default": true,
+          "description": "Shows '+N dir' for N extra directories granted via workspace.added_dirs, when N > 0."
+        },
+        "clickableLinks": {
+          "type": "boolean",
+          "default": false,
+          "description": "Wraps the git branch and PR number in OSC-8 terminal hyperlinks (branch → repo tree view, PR → PR page), built only from workspace.repo.host/owner/name + the branch name/PR number after a strict charset check — never from free-text fields. Off by default since OSC-8 support isn't universal; an unsupporting terminal just shows the plain text with no visible harm, but some people find escaped-looking fallbacks distracting."
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Background-agent visibility, power layout only. Independent of the separate subagentStatusLine surface (see README) — that one is registered as its own settings.json key, not controlled from here.",
+      "properties": {
+        "bgAgentSegment": {
+          "type": "boolean",
+          "default": false,
+          "description": "Shows 'bg:N (w:.. b:..)' from `claude agents --json --cwd <cwd>`. Off by default: each poll spawns a full CLI process (~0.4s observed) — see bgAgentPollSeconds."
+        },
+        "bgAgentPollSeconds": {
+          "type": "integer",
+          "minimum": 5,
+          "default": 60,
+          "description": "Minimum seconds between `claude agents --json` polls per session; cached in between. Only relevant if bgAgentSegment is true."
+        },
+        "hookCounterEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Fills the gap between polls with a much cheaper, approximate count maintained by hooks/hooks.json (SubagentStart/SubagentStop), shown with a leading '~'. Requires: (1) the plugin's hooks are only loaded by a NEW Claude Code session — restart after enabling; (2) can drift high if a subagent is killed without firing SubagentStop, self-corrected at the next bgAgentSegment poll; (3) not available via the curl install.sh path, only the plugin path."
         }
       }
     }

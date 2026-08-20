@@ -1,7 +1,7 @@
 {
-  "name": "claude-statusline",
-  "description": "Pluggable Claude Code statusline — model/context/git/rate-limits with 3 layout presets, ASCII-safe mode, and a hardened bash renderer.",
-  "version": "0.1.0",
+  "name": "fleetline",
+  "description": "Pluggable Claude Code statusline — model/context/git/rate-limits/cost/burn-rate with 3 layout presets, background-agent tracking, a fleet-view row renderer, ASCII-safe mode, and a hardened bash renderer.",
+  "version": "0.2.0",
   "author": {
     "name": "Hai Nguyen"
   }
