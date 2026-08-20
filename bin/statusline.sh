@@ -9,7 +9,7 @@ input=$(cat)
 
 # ── Preflight ─────────────────────────────────────────────────────────────
 if ! command -v jq >/dev/null 2>&1; then
-    printf '%s\n' "[statusline: thiếu lệnh 'jq' — cài rồi thử lại (xem README)]"
+    printf '%s\n' "[statusline: missing 'jq' — install it and try again (see README)]"
     exit 0
 fi
 GIT_OK=1
@@ -208,8 +208,8 @@ if [ "$LAYOUT" = "power" ] && [ -n "$LAST_ACTIVITY_TS" ]; then
     ELAPSED=$(( NOW - LAST_ACTIVITY_TS ))
     REMAINING=$(( TTL_MIN * 60 - ELAPSED ))
     if [ "$REMAINING" -le 0 ]; then
-        if [ "$ASCII" = "true" ]; then CACHE_TTL_SEG="${RED}TTL het${RESET}"
-        else                           CACHE_TTL_SEG="${RED}❄ TTL hết${RESET}"; fi
+        if [ "$ASCII" = "true" ]; then CACHE_TTL_SEG="${RED}TTL out${RESET}"
+        else                           CACHE_TTL_SEG="${RED}❄ TTL out${RESET}"; fi
     elif [ "$REMAINING" -le 600 ]; then
         CACHE_TTL_SEG="${YELLOW}TTL:$(( REMAINING / 60 ))m${RESET}"
     else
@@ -247,7 +247,7 @@ if [ "$LAYOUT" != "minimal" ] && [ "$BURN_ON" = "true" ] && [ -n "$SESSION_ID" ]
             fi
             if [ -n "$PER_HOUR" ]; then
                 BURN_SEG="${DIM}\$${PER_HOUR}/h${RESET}"
-                [ -n "$ETA" ] && BURN_SEG="${BURN_SEG} ${DIM}·${RESET} hết 5h ${YELLOW}${ETA}${RESET}"
+                [ -n "$ETA" ] && BURN_SEG="${BURN_SEG} ${DIM}·${RESET} 5h out in ${YELLOW}${ETA}${RESET}"
             fi
         fi
     fi

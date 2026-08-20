@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║  fleetline — one-line installer (no plugin marketplace)          ║
-# ║  Chạy: curl -fsSL <raw-url>/install.sh | bash                    ║
+# ║  Run: curl -fsSL <raw-url>/install.sh | bash                     ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
 set -e
@@ -21,18 +21,18 @@ printf "${C}══════════════════════�
 printf "${C}  fleetline — Installer                 ${Z}\n"
 printf "${C}═══════════════════════════════════════════════${Z}\n\n"
 
-# ── Kiểm tra prerequisites ───────────────────────────────────────────────────
-info "Kiểm tra prerequisites..."
+# ── Check prerequisites ──────────────────────────────────────────────────────
+info "Checking prerequisites..."
 
-command -v jq  >/dev/null 2>&1 || die "jq chưa được cài. Cài bằng: brew install jq  hoặc  apt install jq"
-command -v git >/dev/null 2>&1 || warn "git chưa cài — thông tin git branch sẽ không hiển thị"
-ok "jq có sẵn"
+command -v jq  >/dev/null 2>&1 || die "jq is not installed. Install with: brew install jq  or  apt install jq"
+command -v git >/dev/null 2>&1 || warn "git is not installed — the git branch segment won't render"
+ok "jq is available"
 
-# ── Tạo thư mục ~/.claude nếu chưa có ───────────────────────────────────────
+# ── Create ~/.claude if it doesn't exist ─────────────────────────────────────
 mkdir -p "$HOME/.claude"
 
-# ── Ghi statusline script (bản đã hardened bảo mật + 3 layout preset) ──────
-info "Cài statusline script vào $SCRIPT_DEST ..."
+# ── Write the statusline script (security-hardened, 3 layout presets) ──────
+info "Installing statusline script to $SCRIPT_DEST ..."
 
 cat > "$SCRIPT_DEST" << 'STATUSLINE_EOF'
 #!/usr/bin/env bash
@@ -223,7 +223,7 @@ input=$(cat)
 
 # ── Preflight ─────────────────────────────────────────────────────────────
 if ! command -v jq >/dev/null 2>&1; then
-    printf '%s\n' "[statusline: thiếu lệnh 'jq' — cài rồi thử lại (xem README)]"
+    printf '%s\n' "[statusline: missing 'jq' — install it and try again (see README)]"
     exit 0
 fi
 GIT_OK=1
@@ -418,8 +418,8 @@ if [ "$LAYOUT" = "power" ] && [ -n "$LAST_ACTIVITY_TS" ]; then
     ELAPSED=$(( NOW - LAST_ACTIVITY_TS ))
     REMAINING=$(( TTL_MIN * 60 - ELAPSED ))
     if [ "$REMAINING" -le 0 ]; then
-        if [ "$ASCII" = "true" ]; then CACHE_TTL_SEG="${RED}TTL het${RESET}"
-        else                           CACHE_TTL_SEG="${RED}❄ TTL hết${RESET}"; fi
+        if [ "$ASCII" = "true" ]; then CACHE_TTL_SEG="${RED}TTL out${RESET}"
+        else                           CACHE_TTL_SEG="${RED}❄ TTL out${RESET}"; fi
     elif [ "$REMAINING" -le 600 ]; then
         CACHE_TTL_SEG="${YELLOW}TTL:$(( REMAINING / 60 ))m${RESET}"
     else
@@ -457,7 +457,7 @@ if [ "$LAYOUT" != "minimal" ] && [ "$BURN_ON" = "true" ] && [ -n "$SESSION_ID" ]
             fi
             if [ -n "$PER_HOUR" ]; then
                 BURN_SEG="${DIM}\$${PER_HOUR}/h${RESET}"
-                [ -n "$ETA" ] && BURN_SEG="${BURN_SEG} ${DIM}·${RESET} hết 5h ${YELLOW}${ETA}${RESET}"
+                [ -n "$ETA" ] && BURN_SEG="${BURN_SEG} ${DIM}·${RESET} 5h out in ${YELLOW}${ETA}${RESET}"
             fi
         fi
     fi
@@ -582,10 +582,10 @@ fi
 STATUSLINE_EOF
 
 chmod +x "$SCRIPT_DEST"
-ok "Script đã ghi vào $SCRIPT_DEST"
+ok "Script written to $SCRIPT_DEST"
 
-# ── Cập nhật settings.json ───────────────────────────────────────────────────
-info "Cập nhật $SETTINGS_FILE ..."
+# ── Update settings.json ─────────────────────────────────────────────────────
+info "Updating $SETTINGS_FILE ..."
 
 STATUSLINE_JSON='{"type":"command","command":"bash '"$SCRIPT_DEST"'","refreshInterval":30}'
 
@@ -593,14 +593,14 @@ if [ -f "$SETTINGS_FILE" ]; then
     TMP=$(mktemp)
     jq --argjson sl "$STATUSLINE_JSON" '.statusLine = $sl' "$SETTINGS_FILE" > "$TMP" \
         && mv "$TMP" "$SETTINGS_FILE"
-    ok "settings.json đã cập nhật (các settings khác được giữ nguyên)"
-    warn "Nếu bạn đã có statusLine tuỳ biến riêng, nó vừa bị ghi đè — settings.json KHÔNG được backup tự động ở đường cài này. Dùng plugin (+/statusline-setup) nếu muốn có backup tự động."
+    ok "settings.json updated (other settings left untouched)"
+    warn "If you already had a custom statusLine, it was just overwritten — settings.json is NOT backed up automatically by this install path. Use the plugin (/statusline-setup) if you want that safety net."
 else
     printf '{\n  "statusLine": %s\n}\n' "$STATUSLINE_JSON" > "$SETTINGS_FILE"
-    ok "settings.json đã tạo mới"
+    ok "settings.json created"
 fi
 
-# ── Config mặc định (đầy đủ theo config/schema.json) ────────────────────────
+# ── Default config (full set from config/schema.json) ───────────────────────
 CONFIG_FILE="$HOME/.claude/statusline-fleetline.config.json"
 if [ ! -f "$CONFIG_FILE" ]; then
     cat > "$CONFIG_FILE" << 'CONFIG_EOF'
@@ -625,22 +625,22 @@ if [ ! -f "$CONFIG_FILE" ]; then
   }
 }
 CONFIG_EOF
-    ok "Config mặc định đã tạo: $CONFIG_FILE"
+    ok "Default config created: $CONFIG_FILE"
 else
-    ok "Đã có config từ trước, giữ nguyên: $CONFIG_FILE"
+    ok "Existing config found, left untouched: $CONFIG_FILE"
 fi
 
-# ── Tổng kết ─────────────────────────────────────────────────────────────────
+# ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 printf "${G}═══════════════════════════════════════════════${Z}\n"
-printf "${G}  Cài đặt hoàn tất!                            ${Z}\n"
+printf "${G}  Install complete!                            ${Z}\n"
 printf "${G}═══════════════════════════════════════════════${Z}\n\n"
 
 printf "  Script : ${D}%s${Z}\n" "$SCRIPT_DEST"
 printf "  Config : ${D}%s${Z}\n" "$CONFIG_FILE"
-printf "  Layout : ${D}hardened (đổi bằng cách sửa \"layout\" trong config: minimal | hardened | power)${Z}\n"
+printf "  Layout : ${D}hardened (change by editing \"layout\" in the config: minimal | hardened | power)${Z}\n"
 echo ""
-printf "  Status line sẽ hiển thị sau lượt tiếp theo trong Claude Code — không cần khởi động lại.\n"
-printf "  ${D}Lưu ý: bộ đếm background-agent qua hook và bề mặt subagentStatusLine (fleet view)${Z}\n"
-printf "  ${D}chỉ có ở đường cài plugin (/plugin install), không có ở installer curl này.${Z}\n"
+printf "  The status line will show up on your next turn in Claude Code — no restart needed.\n"
+printf "  ${D}Note: the background-agent hook counter and the subagentStatusLine surface (fleet view)${Z}\n"
+printf "  ${D}are plugin-only (/plugin install) — not available through this curl installer.${Z}\n"
 echo ""

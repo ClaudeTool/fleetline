@@ -293,9 +293,9 @@
       <div class="term">
         <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span></div>
         <div class="term-body">
-          <div><span style="color:#5b6273;">Rate:</span> 5h:[<span class="pxbar" aria-hidden="true" data-fill="7" data-color="yellow"></span>] <span style="color:#f9e2af;">72%</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.20/h</span> <span style="color:#5b6273;">·</span> hết 5h <span style="color:#f9e2af;">~40m</span></div>
-          <div style="margin-top:10px;"><span style="color:#a6e3a1;">TTL:58m</span> <span class="dim">— cache còn nóng</span></div>
-          <div style="margin-top:2px;"><span style="color:#f38ba8;">❄ TTL hết</span> <span class="dim">— vừa vượt cửa sổ trượt</span></div>
+          <div><span style="color:#5b6273;">Rate:</span> 5h:[<span class="pxbar" aria-hidden="true" data-fill="7" data-color="yellow"></span>] <span style="color:#f9e2af;">72%</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.20/h</span> <span style="color:#5b6273;">·</span> 5h out in <span style="color:#f9e2af;">~40m</span></div>
+          <div style="margin-top:10px;"><span style="color:#a6e3a1;">TTL:58m</span> <span class="dim">— cache still warm</span></div>
+          <div style="margin-top:2px;"><span style="color:#f38ba8;">❄ TTL out</span> <span class="dim">— just slid past the window</span></div>
         </div>
       </div>
       <div class="feature-copy">
@@ -401,7 +401,7 @@
 
   var colored = [
     '<span style="color:#89dceb">[Sonnet 5]</span> <span style="color:#5b6273">v2.1.4</span> <span style="color:#5b6273">|</span> Ctx [' + pxbarHTML(3, 10, 'green') + '] 34%/200k <span style="color:#5b6273">|</span> <span style="color:#a6e3a1">+120</span>/<span style="color:#f38ba8">-45</span> <span style="color:#5b6273">|</span> 🌿 <span style="color:#a6e3a1">main</span>',
-    '<span style="color:#5b6273">Rate:</span> 5h:[' + pxbarHTML(7, 10, 'yellow') + '] 72% <span style="color:#5b6273">|</span> <span style="color:#5b6273">$1.20/h · hết 5h ~40m</span>',
+    '<span style="color:#5b6273">Rate:</span> 5h:[' + pxbarHTML(7, 10, 'yellow') + '] 72% <span style="color:#5b6273">|</span> <span style="color:#5b6273">$1.20/h · 5h out in ~40m</span>',
     '<span style="color:#e7e9ee">$0.84</span> <span style="color:#5b6273">|</span> <span style="color:#89dceb">PR #128</span> <span style="color:#5b6273">|</span> <span style="color:#5b6273">bg:</span>2 (w:1 b:1) <span style="color:#5b6273">|</span> <span style="color:#a6e3a1">TTL:58m</span><span class="cursor"></span>'
   ];
   var ids = ['hl1', 'hl2', 'hl3'];

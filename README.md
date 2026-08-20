@@ -4,7 +4,7 @@ A pluggable statusline for [Claude Code](https://claude.com/claude-code): model,
 
 ```
 [Sonnet 5] v2.1.4 | Ctx [███░░░░░░░] 34%/200k | +120/-45 | ⬡ feature-x | 🌿 main +2 ~5
-Rate: 5h:[███████░░░] 72% (↻ Fri 21/08 09:00) | 7d:[███░░░░░░░] 31% (↻ Tue 25/08 00:00) | $1.20/h · hết 5h ~40m
+Rate: 5h:[███████░░░] 72% (↻ Fri 21/08 09:00) | 7d:[███░░░░░░░] 31% (↻ Tue 25/08 00:00) | $1.20/h · 5h out in ~40m
 $0.842 | PR #128 (review: approved) | effort:high | session:refactor-auth | thinking:on | bg:2 (w:1 b:1) | TTL:58m
 ```
 
@@ -85,7 +85,7 @@ Writes the script to `~/.claude/statusline-command.sh` and merges `statusLine` i
 
 ## The cache-TTL segment (power layout)
 
-Not a real cache-hit gauge — Claude Code's statusline payload doesn't expose cache token counts. It's a countdown inferred from wall-clock time since your last distinct turn in this session, using the documented sliding-window TTL: 60 minutes if the payload carries `rate_limits` (subscription plans), 5 minutes otherwise (API key). Shows `TTL:58m` (green) → `TTL:6m` (yellow, ≤10 min left) → `❄ TTL hết` (red). If your Claude Code version doesn't send `prompt_id`, the countdown can't detect new turns and just shows the full window every time — a known, harmless degradation.
+Not a real cache-hit gauge — Claude Code's statusline payload doesn't expose cache token counts. It's a countdown inferred from wall-clock time since your last distinct turn in this session, using the documented sliding-window TTL: 60 minutes if the payload carries `rate_limits` (subscription plans), 5 minutes otherwise (API key). Shows `TTL:58m` (green) → `TTL:6m` (yellow, ≤10 min left) → `❄ TTL out` (red). If your Claude Code version doesn't send `prompt_id`, the countdown can't detect new turns and just shows the full window every time — a known, harmless degradation.
 
 ## Fleet view: `bin/subagent-statusline.sh`
 
