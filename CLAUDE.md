@@ -152,20 +152,33 @@ dev environment — not just read-and-assumed-correct):
 
 ## Open TODOs for whoever picks this up next
 
-1. **Replace the `haib` GitHub-username placeholder** throughout
-   (README.md, docs/index.html, install.sh's curl URL) with the real
-   account before this goes public — it was a guess, never confirmed.
-2. **No git remote is configured yet.** Create the GitHub repo, push,
-   then enable GitHub Pages (Settings → Pages → Deploy from branch →
-   `main` → `/docs`) to publish `docs/index.html`.
-3. Once live and stable, consider a PR to the official
+1. ~~Replace the `haib` GitHub-username placeholder~~ — **done.** The
+   real account is `ClaudeTool` (github.com/ClaudeTool/fleetline);
+   `docs/index.html`'s hardcoded links now point there.
+2. ~~No git remote configured~~ — **done.** `origin` is
+   `git@github.com:ClaudeTool/fleetline.git`, pushed to `main`. Still
+   **outstanding**: enable GitHub Pages (Settings → Pages → Deploy from
+   branch → `main` → `/docs`) to actually publish `docs/index.html` —
+   that step needs to be done from the GitHub web UI, not from a
+   session.
+3. ~~Mixed Vietnamese/English strings~~ — **done.** `bin/statusline.sh`
+   had two Vietnamese fragments hardcoded into real output regardless of
+   config (the jq-missing message, the cache-TTL-expired marker `❄ TTL
+   hết`, and the burn-rate ETA label `hết 5h`), and `install.sh`'s
+   installer UX was Vietnamese-only end to end. Both are now English;
+   `install.sh`'s inlined copy was regenerated via the documented recipe
+   and diff-verified to produce identical output to the two-file build.
+   If you add new user-facing strings anywhere in `bin/` or `install.sh`,
+   keep them English — this project's audience-facing surface (README,
+   plugin.json, landing page) is English throughout.
+4. Once live and stable, consider a PR to the official
    `claude-plugins-official` marketplace — re-check for name collisions
    again first, the landscape moves.
-4. If anyone can capture a real `subagentStatusLine` payload or a real
+5. If anyone can capture a real `subagentStatusLine` payload or a real
    `SubagentStart`/`SubagentStop` hook payload from an actual multi-agent
    session, that resolves the two "not verified" items above — worth
    prioritizing over new features.
-5. macOS/Windows testing (see above) — nothing is known to be broken
+6. macOS/Windows testing (see above) — nothing is known to be broken
    there, it's just never been tried.
 
 ## How testing was actually done in this project (reuse this pattern)
