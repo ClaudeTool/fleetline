@@ -13,7 +13,7 @@ $0.842 | PR #128 (review: approved) | effort:high | session:refactor-auth | thin
 ### Option A — plugin marketplace (recommended)
 
 ```
-/plugin marketplace add <your-github-user>/fleetline
+/plugin marketplace add ClaudeTool/fleetline
 /plugin install fleetline
 /statusline-setup
 ```
@@ -23,7 +23,7 @@ $0.842 | PR #128 (review: approved) | effort:high | session:refactor-auth | thin
 ### Option B — one-line curl install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<your-github-user>/fleetline/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ClaudeTool/fleetline/main/install.sh | bash
 ```
 
 Writes the script to `~/.claude/statusline-command.sh` and merges `statusLine` into `~/.claude/settings.json` (existing settings preserved; an existing `statusLine` key is overwritten **without** a backup — use the plugin path if you want that safety net). The background-agent hook counter and the fleet-view row renderer (`subagentStatusLine`) are **plugin-only** — not available through this path.
