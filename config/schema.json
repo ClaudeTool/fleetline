@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "claude-statusline config",
+  "description": "Lives at ~/.claude/statusline-claude-statusline.config.json (or $STATUSLINE_CONFIG). Outside the plugin directory on purpose — a plugin update never touches it.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "layout": {
+      "type": "string",
+      "enum": ["minimal", "hardened", "power"],
+      "default": "hardened",
+      "description": "minimal = 1 line (model/context/git). hardened = 2 lines, matches the original model/context/lines/git + rate-limits layout. power = adds a 3rd line with cost/session/PR/effort/thinking/cache-TTL, each shown only when the underlying field is present in that turn's payload."
+    },
+    "asciiMode": {
+      "type": "boolean",
+      "default": false,
+      "description": "true replaces block-bar characters (█░) and emoji (🌿⬡⚠) with plain ASCII (#-, git:/wt:/!), for terminals/fonts without Unicode or Nerd Font glyph support."
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "warn": { "type": "integer", "minimum": 0, "maximum": 100, "default": 70 },
+        "crit": { "type": "integer", "minimum": 0, "maximum": 100, "default": 90 }
+      },
+      "description": "Percentage thresholds shared by the context bar and both rate-limit bars: below warn = green, [warn,crit) = yellow, >= crit = red."
+    },
+    "hints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "compactHint": {
+          "type": "boolean",
+          "default": true,
+          "description": "When context% >= thresholds.crit, append a red '· /compact?' suffix to the context segment, in every layout."
+        }
+      }
+    }
+  }
+}
