@@ -181,12 +181,12 @@ fmt_ts() {
     fi
 }
 
-# Renders "[bar] p%" colored by $WARN_T/$CRIT_T. Used for rate-limit bars in
-# the main script and per-task context bars in the subagent renderer.
-rate_bar() {
-    local raw="$1" p
-    p=$(printf '%.0f' "$raw" 2>/dev/null) || p=0
-    p=$(clamp_pct "$p")
+# Draws just "[███░░░░░░░]" (colored by $WARN_T/$CRIT_T, ASCII-aware), no
+# percentage suffix — the one place the 10-cell width and fill-character
+# logic lives, shared by the main script's context bar and rate_bar below
+# (and, via rate_bar, the per-task context bars in the subagent renderer).
+draw_bar() {
+    local p="$1"
     local filled=$(( p * 10 / 100 )) empty=$(( 10 - p * 10 / 100 ))
     local color
     if   [ "$p" -ge "$CRIT_T" ]; then color="$RED"
@@ -197,7 +197,20 @@ rate_bar() {
     local f_str e_str
     [ "$filled" -gt 0 ] && printf -v f_str "%${filled}s" && f_str="${f_str// /$fillch}" || f_str=""
     [ "$empty"  -gt 0 ] && printf -v e_str "%${empty}s"  && e_str="${e_str// /$emptych}" || e_str=""
-    printf '%s' "${color}[${f_str}${e_str}]${RESET} ${color}${p}%${RESET}"
+    printf '%s' "${color}[${f_str}${e_str}]${RESET}"
+}
+
+# Renders "[bar] p%" colored by $WARN_T/$CRIT_T. Used for rate-limit bars in
+# the main script and per-task context bars in the subagent renderer.
+rate_bar() {
+    local raw="$1" p
+    p=$(printf '%.0f' "$raw" 2>/dev/null) || p=0
+    p=$(clamp_pct "$p")
+    local color
+    if   [ "$p" -ge "$CRIT_T" ]; then color="$RED"
+    elif [ "$p" -ge "$WARN_T" ]; then color="$YELLOW"
+    else                               color="$GREEN"; fi
+    printf '%s %s' "$(draw_bar "$p")" "${color}${p}%${RESET}"
 }
 
 # fleetline — pluggable Claude Code statusline.
@@ -237,38 +250,73 @@ BG_POLL_SEC=$(cfg '.agents.bgAgentPollSeconds // 60')
 case "$BG_POLL_SEC" in ''|*[!0-9]*) BG_POLL_SEC=60 ;; esac
 
 # ── Extract fields from stdin ────────────────────────────────────────────────
-MODEL=$(sanitize "$(echo "$input"        | jq -r '.model.display_name // "?"')")
-VERSION=$(sanitize "$(echo "$input"      | jq -r '.version // ""')")
-CWD=$(echo "$input"                      | jq -r '.workspace.current_dir // .cwd // ""')
-GIT_WORKTREE=$(sanitize "$(echo "$input" | jq -r '.workspace.git_worktree // empty')")
-REPO_HOST=$(sanitize "$(echo "$input"    | jq -r '.workspace.repo.host // empty')")
-REPO_OWNER=$(sanitize "$(echo "$input"   | jq -r '.workspace.repo.owner // empty')")
-REPO_NAME=$(sanitize "$(echo "$input"    | jq -r '.workspace.repo.name // empty')")
-ADDED_DIRS_COUNT=$(echo "$input"         | jq -r '(.workspace.added_dirs // []) | length' 2>/dev/null)
+# One jq call (was ~26 separate `echo | jq` forks) — this runs on every
+# refresh, so forks are the actual cost center here. `// ""` (never `//
+# empty`) throughout: inside an array literal, `// empty` drops the element
+# entirely and shifts every field after it, silently misaligning the read
+# below. Booleans get their own null-check instead of `// false` for the
+# same reason jq's `//` bit us in config reading — `false // false` happens
+# to look right, but `.thinking.enabled // empty` genuinely doesn't: an
+# explicit `false` is falsy to `//` too, so it was read back as absent and
+# "thinking:off" could never actually render.
+#
+# Joined with \x1f (Unit Separator), not a tab: bash's `read` classifies
+# tab as "IFS whitespace" no matter what IFS is set to, which collapses
+# consecutive delimiters — exactly the empty fields most of these values
+# are — and silently shifts every field after the first gap. \x1f isn't
+# whitespace to `read`, so empty fields between two of it are preserved.
+IFS=$'\x1f' read -r \
+    MODEL VERSION CWD GIT_WORKTREE REPO_HOST REPO_OWNER REPO_NAME ADDED_DIRS_COUNT \
+    PCT CTX_SIZE EXCEEDS LINES_ADD LINES_REM COST_USD \
+    SESSION_ID SESSION_NAME PROMPT_ID EFFORT THINKING PR_NUM PR_REVIEW OUTPUT_STYLE VIM_MODE \
+    RATE_5H RATE_5H_AT RATE_7D RATE_7D_AT \
+    <<<"$(echo "$input" | jq -r '
+        [
+          (.model.display_name // "?"),
+          (.version // ""),
+          (.workspace.current_dir // .cwd // ""),
+          (.workspace.git_worktree // ""),
+          (.workspace.repo.host // ""),
+          (.workspace.repo.owner // ""),
+          (.workspace.repo.name // ""),
+          ((.workspace.added_dirs // []) | length | tostring),
+          (.context_window.used_percentage // 0 | tostring | split(".")[0]),
+          (.context_window.context_window_size // 200000 | tostring),
+          (if .exceeds_200k_tokens == null then "false" else (.exceeds_200k_tokens | tostring) end),
+          (.cost.total_lines_added // 0 | tostring),
+          (.cost.total_lines_removed // 0 | tostring),
+          (.cost.total_cost_usd // "" | tostring),
+          (.session_id // ""),
+          (.session_name // ""),
+          (.prompt_id // ""),
+          (.effort.level // ""),
+          (if .thinking.enabled == null then "" else (.thinking.enabled | tostring) end),
+          (.pr.number // "" | tostring),
+          (.pr.review_state // ""),
+          (.output_style.name // ""),
+          (.vim.mode // ""),
+          (.rate_limits.five_hour.used_percentage // "" | tostring),
+          (.rate_limits.five_hour.resets_at // "" | tostring),
+          (.rate_limits.seven_day.used_percentage // "" | tostring),
+          (.rate_limits.seven_day.resets_at // "" | tostring)
+        ] | join("")
+    ' 2>/dev/null)"
+
+MODEL=$(sanitize "$MODEL")
+VERSION=$(sanitize "$VERSION")
+GIT_WORKTREE=$(sanitize "$GIT_WORKTREE")
+REPO_HOST=$(sanitize "$REPO_HOST")
+REPO_OWNER=$(sanitize "$REPO_OWNER")
+REPO_NAME=$(sanitize "$REPO_NAME")
+SESSION_NAME=$(sanitize "$SESSION_NAME")
+EFFORT=$(sanitize "$EFFORT")
+PR_REVIEW=$(sanitize "$PR_REVIEW")
+OUTPUT_STYLE=$(sanitize "$OUTPUT_STYLE")
+VIM_MODE=$(sanitize "$VIM_MODE")
+
 case "$ADDED_DIRS_COUNT" in ''|*[!0-9]*) ADDED_DIRS_COUNT=0 ;; esac
-
-PCT=$(clamp_pct "$(echo "$input" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)")
-CTX_SIZE=$(echo "$input"    | jq -r '.context_window.context_window_size // 200000')
-EXCEEDS=$(echo "$input"     | jq -r '.exceeds_200k_tokens // false')
-
-LINES_ADD=$(echo "$input"   | jq -r '.cost.total_lines_added // 0')
-LINES_REM=$(echo "$input"   | jq -r '.cost.total_lines_removed // 0')
-COST_USD=$(echo "$input"    | jq -r '.cost.total_cost_usd // empty')
-
-SESSION_ID=$(echo "$input"                | jq -r '.session_id // empty')
-SESSION_NAME=$(sanitize "$(echo "$input"  | jq -r '.session_name // empty')")
-PROMPT_ID=$(echo "$input"                 | jq -r '.prompt_id // empty')
-EFFORT=$(sanitize "$(echo "$input"        | jq -r '.effort.level // empty')")
-THINKING=$(echo "$input"                  | jq -r '.thinking.enabled // empty')
-PR_NUM=$(echo "$input"                    | jq -r '.pr.number // empty')
-PR_REVIEW=$(sanitize "$(echo "$input"     | jq -r '.pr.review_state // empty')")
-OUTPUT_STYLE=$(sanitize "$(echo "$input"  | jq -r '.output_style.name // empty')")
-VIM_MODE=$(sanitize "$(echo "$input"      | jq -r '.vim.mode // empty')")
-
-RATE_5H=$(echo "$input"     | jq -r '.rate_limits.five_hour.used_percentage // empty')
-RATE_5H_AT=$(echo "$input"  | jq -r '.rate_limits.five_hour.resets_at // empty')
-RATE_7D=$(echo "$input"     | jq -r '.rate_limits.seven_day.used_percentage // empty')
-RATE_7D_AT=$(echo "$input"  | jq -r '.rate_limits.seven_day.resets_at // empty')
+PCT=$(clamp_pct "$PCT")
+case "$CTX_SIZE" in ''|*[!0-9]*) CTX_SIZE=200000 ;; esac
 
 STATE_DIR="$HOME/.claude/cache-state"
 mkdir -p "$STATE_DIR" 2>/dev/null
@@ -295,19 +343,12 @@ if [ -n "$SESSION_ID" ]; then
 fi
 
 # ── Context bar + optional "/compact?" hint ─────────────────────────────────
-if   [ "$PCT" -ge "$CRIT_T" ]; then BAR_COLOR="$RED"
-elif [ "$PCT" -ge "$WARN_T" ]; then BAR_COLOR="$YELLOW"
-else                                BAR_COLOR="$GREEN"; fi
-FILLED=$((PCT * 10 / 100)); EMPTY=$((10 - FILLED))
-if [ "$ASCII" = "true" ]; then FILLCH='#'; EMPTYCH='-'; else FILLCH='█'; EMPTYCH='░'; fi
-printf -v F_STR "%${FILLED}s" 2>/dev/null; BAR_F="${F_STR// /$FILLCH}"
-printf -v E_STR "%${EMPTY}s"  2>/dev/null; BAR_E="${E_STR// /$EMPTYCH}"
 CTX_K=$((CTX_SIZE / 1000))
 EXCEEDS_LABEL=""
 if [ "$EXCEEDS" = "true" ]; then
     if [ "$ASCII" = "true" ]; then EXCEEDS_LABEL="${RED}!${RESET} "; else EXCEEDS_LABEL="${RED}⚠${RESET} "; fi
 fi
-CTX_PART="${EXCEEDS_LABEL}Ctx ${BAR_COLOR}[${BAR_F}${BAR_E}]${RESET} ${PCT}%/${CTX_K}k"
+CTX_PART="${EXCEEDS_LABEL}Ctx $(draw_bar "$PCT") ${PCT}%/${CTX_K}k"
 if [ "$COMPACT_HINT" = "true" ] && [ "$PCT" -ge "$CRIT_T" ]; then
     CTX_PART="${CTX_PART} ${RED}· /compact?${RESET}"
 fi

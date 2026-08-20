@@ -141,12 +141,12 @@ fmt_ts() {
     fi
 }
 
-# Renders "[bar] p%" colored by $WARN_T/$CRIT_T. Used for rate-limit bars in
-# the main script and per-task context bars in the subagent renderer.
-rate_bar() {
-    local raw="$1" p
-    p=$(printf '%.0f' "$raw" 2>/dev/null) || p=0
-    p=$(clamp_pct "$p")
+# Draws just "[███░░░░░░░]" (colored by $WARN_T/$CRIT_T, ASCII-aware), no
+# percentage suffix — the one place the 10-cell width and fill-character
+# logic lives, shared by the main script's context bar and rate_bar below
+# (and, via rate_bar, the per-task context bars in the subagent renderer).
+draw_bar() {
+    local p="$1"
     local filled=$(( p * 10 / 100 )) empty=$(( 10 - p * 10 / 100 ))
     local color
     if   [ "$p" -ge "$CRIT_T" ]; then color="$RED"
@@ -157,5 +157,18 @@ rate_bar() {
     local f_str e_str
     [ "$filled" -gt 0 ] && printf -v f_str "%${filled}s" && f_str="${f_str// /$fillch}" || f_str=""
     [ "$empty"  -gt 0 ] && printf -v e_str "%${empty}s"  && e_str="${e_str// /$emptych}" || e_str=""
-    printf '%s' "${color}[${f_str}${e_str}]${RESET} ${color}${p}%${RESET}"
+    printf '%s' "${color}[${f_str}${e_str}]${RESET}"
+}
+
+# Renders "[bar] p%" colored by $WARN_T/$CRIT_T. Used for rate-limit bars in
+# the main script and per-task context bars in the subagent renderer.
+rate_bar() {
+    local raw="$1" p
+    p=$(printf '%.0f' "$raw" 2>/dev/null) || p=0
+    p=$(clamp_pct "$p")
+    local color
+    if   [ "$p" -ge "$CRIT_T" ]; then color="$RED"
+    elif [ "$p" -ge "$WARN_T" ]; then color="$YELLOW"
+    else                               color="$GREEN"; fi
+    printf '%s %s' "$(draw_bar "$p")" "${color}${p}%${RESET}"
 }

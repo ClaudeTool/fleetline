@@ -8,7 +8,7 @@
 <meta name="description" content="A statusline for Claude Code that tracks background agents, predicts when your rate limit runs out, and was hardened against the injection bug most statuslines ship with.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@700;800&family=IBM+Plex+Sans:wght@400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #14161c;
@@ -174,7 +174,7 @@
 
   footer.site { padding: 56px 0 72px; }
   footer.site .wrap { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
-  footer.site .meta { font-size: 13px; color: var(--muted-2); font-family: var(--font-mono); }
+  footer.site .meta { font-size: 13px; color: var(--muted); font-family: var(--font-mono); }
   footer.site .meta a { color: var(--muted); }
 </style>
 </head>
@@ -238,7 +238,7 @@
         <div class="term-body">
           <div class="layout-label">minimal</div>
           <div class="layout-desc">Model, context, branch. Nothing else — for people who want the line to disappear.</div>
-          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#e7e9ee;">Ctx</span> [<span class="pxbar" data-fill="3" data-color="green"></span>] 34%/200k <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
+          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#e7e9ee;">Ctx</span> [<span class="pxbar" aria-hidden="true" data-fill="3" data-color="green"></span>] 34%/200k <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
         </div>
       </div>
       <div class="term layout-card">
@@ -246,8 +246,8 @@
         <div class="term-body">
           <div class="layout-label">hardened</div>
           <div class="layout-desc">The classic layout, plus burn-rate. What most people run day to day.</div>
-          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#5b6273;">v2.1.4</span> <span style="color:#5b6273;">|</span> Ctx [<span class="pxbar" data-fill="3" data-color="green"></span>] 34%<span style="color:#5b6273;">|</span> <span style="color:#a6e3a1;">+120</span>/<span style="color:#f38ba8;">-45</span> <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
-          <div style="margin-top:4px;"><span style="color:#5b6273;">Rate:</span> 5h:[<span class="pxbar" data-fill="7" data-color="yellow"></span>] 72% <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.2/h</span></div>
+          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#5b6273;">v2.1.4</span> <span style="color:#5b6273;">|</span> Ctx [<span class="pxbar" aria-hidden="true" data-fill="3" data-color="green"></span>] 34%<span style="color:#5b6273;">|</span> <span style="color:#a6e3a1;">+120</span>/<span style="color:#f38ba8;">-45</span> <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
+          <div style="margin-top:4px;"><span style="color:#5b6273;">Rate:</span> 5h:[<span class="pxbar" aria-hidden="true" data-fill="7" data-color="yellow"></span>] 72% <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.2/h</span></div>
         </div>
       </div>
       <div class="term layout-card">
@@ -279,8 +279,8 @@
       <div class="term">
         <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span><span class="term-title">fleet view</span></div>
         <div class="term-body" style="font-size:12.5px;">
-          <div><span style="color:#89dceb;">refactor auth flow</span> <span style="color:#5b6273;">2m</span> [<span class="pxbar" data-fill="9" data-color="red"></span>] <span style="color:#f38ba8;">92%</span> <span style="color:#5b6273;">sonnet-5</span> <span style="color:#cba6f7;">high</span></div>
-          <div style="margin-top:8px;"><span style="color:#89dceb;">payment routing cascade</span> <span style="color:#5b6273;">4m</span> [<span class="pxbar" data-fill="2" data-color="green"></span>] <span style="color:#a6e3a1;">20%</span> <span style="color:#5b6273;">opus-5</span> <span style="color:#cba6f7;">medium</span> <span style="color:#f38ba8;">⚠ stuck</span></div>
+          <div><span style="color:#89dceb;">refactor auth flow</span> <span style="color:#5b6273;">2m</span> [<span class="pxbar" aria-hidden="true" data-fill="9" data-color="red"></span>] <span style="color:#f38ba8;">92%</span> <span style="color:#5b6273;">sonnet-5</span> <span style="color:#cba6f7;">high</span></div>
+          <div style="margin-top:8px;"><span style="color:#89dceb;">payment routing cascade</span> <span style="color:#5b6273;">4m</span> [<span class="pxbar" aria-hidden="true" data-fill="2" data-color="green"></span>] <span style="color:#a6e3a1;">20%</span> <span style="color:#5b6273;">opus-5</span> <span style="color:#cba6f7;">medium</span> <span style="color:#f38ba8;">⚠ stuck</span></div>
         </div>
       </div>
     </div>
@@ -293,7 +293,7 @@
       <div class="term">
         <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span></div>
         <div class="term-body">
-          <div><span style="color:#5b6273;">Rate:</span> 5h:[<span class="pxbar" data-fill="7" data-color="yellow"></span>] <span style="color:#f9e2af;">72%</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.20/h</span> <span style="color:#5b6273;">·</span> hết 5h <span style="color:#f9e2af;">~40m</span></div>
+          <div><span style="color:#5b6273;">Rate:</span> 5h:[<span class="pxbar" aria-hidden="true" data-fill="7" data-color="yellow"></span>] <span style="color:#f9e2af;">72%</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.20/h</span> <span style="color:#5b6273;">·</span> hết 5h <span style="color:#f9e2af;">~40m</span></div>
           <div style="margin-top:10px;"><span style="color:#a6e3a1;">TTL:58m</span> <span class="dim">— cache còn nóng</span></div>
           <div style="margin-top:2px;"><span style="color:#f38ba8;">❄ TTL hết</span> <span class="dim">— vừa vượt cửa sổ trượt</span></div>
         </div>
@@ -323,14 +323,14 @@
           <code id="cmd-plugin">/plugin marketplace add haib/fleetline
 /plugin install fleetline
 /statusline-setup</code>
-          <button class="copybtn" data-copy-target="cmd-plugin">copy</button>
+          <button class="copybtn" data-copy-target="cmd-plugin" aria-live="polite">copy</button>
         </div>
       </div>
       <div>
         <div class="layout-label" style="margin-bottom:8px;">via curl, no marketplace</div>
         <div class="installblock">
           <code id="cmd-curl">curl -fsSL https://raw.githubusercontent.com/haib/fleetline/main/install.sh | bash</code>
-          <button class="copybtn" data-copy-target="cmd-curl">copy</button>
+          <button class="copybtn" data-copy-target="cmd-curl" aria-live="polite">copy</button>
         </div>
       </div>
     </div>
@@ -351,15 +351,23 @@
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Pixel bars: real boxes instead of block-drawing glyphs (see CSS comment).
-  function pxbarHTML(filled, total, color) {
+  // Two helpers: pxbarCellsHTML for a `[data-fill]` placeholder that is
+  // ALREADY the ".pxbar aria-hidden" wrapper (only its cells need filling
+  // in, or it'd end up double-wrapped), and pxbarHTML for building a whole
+  // bar — wrapper included — inline inside a JS-built string (the hero's
+  // `colored[]` lines, which have no pre-existing element to fill).
+  function pxbarCellsHTML(filled, total, color) {
     var html = '';
     for (var i = 0; i < total; i++) {
       html += '<span class="c' + (i < filled ? ' on-' + color : '') + '"></span>';
     }
-    return '<span class="pxbar">' + html + '</span>';
+    return html;
+  }
+  function pxbarHTML(filled, total, color) {
+    return '<span class="pxbar" aria-hidden="true">' + pxbarCellsHTML(filled, total, color) + '</span>';
   }
   document.querySelectorAll('[data-fill]').forEach(function (el) {
-    el.innerHTML = pxbarHTML(
+    el.innerHTML = pxbarCellsHTML(
       parseInt(el.getAttribute('data-fill'), 10),
       parseInt(el.getAttribute('data-total') || '10', 10),
       el.getAttribute('data-color') || 'green'
@@ -450,7 +458,12 @@
     }
     nameEl.textContent = current ? current.id : 'intro';
   }
-  window.addEventListener('scroll', onScroll, { passive: true });
+  var scrollTicking = false;
+  window.addEventListener('scroll', function () {
+    if (scrollTicking) return;
+    scrollTicking = true;
+    requestAnimationFrame(function () { onScroll(); scrollTicking = false; });
+  }, { passive: true });
   onScroll();
 })();
 </script>

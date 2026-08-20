@@ -34,16 +34,32 @@ STUCK_AFTER_MS=120000
 
 while IFS= read -r task; do
     [ -z "$task" ] && continue
-    TID=$(printf '%s' "$task" | jq -r '.id // empty')
+
+    # One jq call per task instead of seven — this loop runs on every
+    # render tick for every visible task, so the fork count multiplies
+    # with N tasks. \x1f (not @tsv's tab) as the join char: see the note
+    # in bin/statusline.sh's own field extraction for why tab breaks on
+    # empty fields.
+    IFS=$'\x1f' read -r TID NAME STATUS MODEL EFFORT START TOKENS CTXSIZE <<<"$(
+        printf '%s' "$task" | jq -r '
+            [
+              (.id // ""),
+              (.name // .label // .description // "agent"),
+              (.status // ""),
+              (.model // ""),
+              (.effort // ""),
+              (.startTime // "" | tostring),
+              (.tokenCount // "" | tostring),
+              (.contextWindowSize // "" | tostring)
+            ] | join("")
+        ' 2>/dev/null
+    )"
     [ -z "$TID" ] && continue
 
-    NAME=$(sanitize "$(printf '%s' "$task" | jq -r '.name // .label // .description // "agent"')")
-    STATUS=$(printf '%s' "$task" | jq -r '.status // empty')
-    MODEL=$(sanitize "$(printf '%s' "$task" | jq -r '.model // empty')")
-    EFFORT=$(sanitize "$(printf '%s' "$task" | jq -r '.effort // empty')")
-    START=$(printf '%s' "$task" | jq -r '.startTime // empty')
-    TOKENS=$(printf '%s' "$task" | jq -r '.tokenCount // empty')
-    CTXSIZE=$(printf '%s' "$task" | jq -r '.contextWindowSize // empty')
+    NAME=$(sanitize "$NAME")
+    [ "${#NAME}" -gt 40 ] && NAME="${NAME:0:40}…"
+    MODEL=$(sanitize "$MODEL")
+    EFFORT=$(sanitize "$EFFORT")
 
     ELAPSED=""
     case "$START" in ''|*[!0-9]*) START="" ;; esac
