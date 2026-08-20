@@ -1,0 +1,13 @@
+{
+  "name": "fleetline-marketplace",
+  "owner": {
+    "name": "Hai Nguyen"
+  },
+  "plugins": [
+    {
+      "name": "fleetline",
+      "source": "./",
+      "description": "Pluggable Claude Code statusline — model/context/git/rate-limits/cost/burn-rate with 3 layout presets, background-agent tracking, a fleet-view row renderer, ASCII-safe mode, and a hardened bash renderer."
+    }
+  ]
+}
