@@ -4,7 +4,7 @@ A pluggable statusline for [Claude Code](https://claude.com/claude-code): model,
 
 ```
 ⬡ feature-x | [Sonnet 5] v2.1.4 | Ctx [███░░░░░░░] 34%/200k | +120/-45 | 🌿 main +2 ~5
-Rate: 5h:[███████░░░] 72% (↻ Fri 21/08 09:00) | 7d:[███░░░░░░░] 31% (↻ Tue 25/08 00:00) | $1.20/h · 5h out in ~40m
+5h:[███████░░░] 72% (↻ Fri 21/08 09:00) | 7d:[███░░░░░░░] 31% (↻ Tue 25/08 00:00) | $1.20/h · 5h out in ~40m
 $0.84 | PR #128 (review: approved) | session:refactor-auth | thinking:on | bg:2 (w:1 b:1) | TTL:58m
 ```
 

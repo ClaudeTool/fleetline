@@ -87,6 +87,8 @@
   nav.site-links { display: flex; gap: 22px; font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
   nav.site-links a { color: var(--muted); }
   nav.site-links a:hover { color: var(--accent-strong); }
+  .gh-star { margin-left: 6px; color: var(--sem-yellow); }
+  .gh-star:empty { margin-left: 0; }
 
   /* ── Hero ────────────────────────────────────────────────────────── */
   .hero { padding-top: 64px; padding-bottom: 72px; }
@@ -196,7 +198,7 @@
   <div class="wordmark">fleet<span class="dot">·</span>line</div>
   <nav class="site-links">
     <a href="#install">install</a>
-    <a href="https://github.com/ClaudeTool/fleetline">github</a>
+    <a href="https://github.com/ClaudeTool/fleetline">github<span class="gh-star" id="gh-star-count"></span></a>
   </nav>
 </header>
 
@@ -221,7 +223,7 @@
   <div class="wrap">
     <div class="eyebrow">three layouts</div>
     <h2 style="font-size:clamp(24px,3.4vw,32px);max-width:560px;">Pick how much of it you want to see.</h2>
-    <p class="lead" style="margin-top:14px;">Set once in <code>/statusline-setup</code>, or edit the config file directly. Nothing here reflows the terminal — narrow window, and the least-important segments drop themselves before the line wraps.</p>
+    <p class="lead" style="margin-top:14px;">Set once in <code>/statusline-setup</code>, or edit the config file directly. Nothing here reflows the terminal — narrow window, and the least-important segments drop themselves before the line wraps. Want more control than three presets? <a href="#custom">Build your own order below.</a></p>
 
     <div class="layout-grid">
       <div class="term layout-card">
@@ -237,17 +239,49 @@
         <div class="term-body">
           <div class="layout-label">hardened</div>
           <div class="layout-desc">The classic layout, plus burn-rate. What most people run day to day.</div>
-          <div><span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#5b6273;">v2.1.4</span> <span style="color:#5b6273;">|</span> Ctx [<span class="pxbar" aria-hidden="true" data-fill="3" data-color="green"></span>] 34%<span style="color:#5b6273;">|</span> <span style="color:#a6e3a1;">+120</span>/<span style="color:#f38ba8;">-45</span> <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
-          <div style="margin-top:4px;"><span style="color:#5b6273;">Rate:</span> 5h:[<span class="pxbar" aria-hidden="true" data-fill="7" data-color="yellow"></span>] 72% <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.2/h</span></div>
+          <div><span style="color:#cba6f7;">⬡ feature-x</span> <span style="color:#5b6273;">|</span> <span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#5b6273;">v2.1.4</span> <span style="color:#5b6273;">|</span> Ctx [<span class="pxbar" aria-hidden="true" data-fill="3" data-color="green"></span>] 34%<span style="color:#5b6273;">|</span> <span style="color:#a6e3a1;">+120</span>/<span style="color:#f38ba8;">-45</span> <span style="color:#5b6273;">|</span> 🌿 <span style="color:#a6e3a1;">main</span></div>
+          <div style="margin-top:4px;">5h:[<span class="pxbar" aria-hidden="true" data-fill="7" data-color="yellow"></span>] 72% <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.2/h</span></div>
         </div>
       </div>
       <div class="term layout-card">
         <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span></div>
         <div class="term-body">
           <div class="layout-label">power</div>
-          <div class="layout-desc">Adds cost, PR state, effort, background agents, cache-TTL — a 3rd line, only when there's something to show.</div>
+          <div class="layout-desc">Adds cost, PR state, session, thinking mode, background agents, cache-TTL — a 3rd line, only when there's something to show.</div>
           <div style="color:#5b6273;">…same as hardened, plus:</div>
           <div><span style="color:#e7e9ee;">$0.84</span> <span style="color:#5b6273;">|</span> <span style="color:#89dceb;">PR #128</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">bg:</span>2 <span style="color:#5b6273;">|</span> <span style="color:#a6e3a1;">TTL:58m</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="custom">
+  <div class="wrap">
+    <div class="feature">
+      <div class="feature-copy">
+        <div class="eyebrow">or build your own</div>
+        <h2>Segment by segment, in whatever order you want.</h2>
+        <p class="lead">The three layouts above are just presets. Underneath, every piece — model, worktree, cost, rate bars, all of it — is one flat ordered list, the same shape as <a href="https://github.com/romkatv/powerlevel10k" target="_blank" rel="noopener">powerlevel10k</a>'s prompt-elements array. Drop a piece anywhere, repeat it, skip it, and insert <code class="mono">newline</code> wherever you want a new line to start.</p>
+        <ul class="checks">
+          <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>No line cap — 1, 2, 5 lines, whatever your custom order needs.</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Separator glyph is configurable too — pipe, dot, chevron, bar, diamond, or your own string.</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Width-aware truncation still applies per line — leftmost piece survives longest.</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Built interactively through <code class="mono">/statusline-setup</code>, or edit the array by hand.</span></li>
+        </ul>
+      </div>
+      <div class="term">
+        <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span></div>
+        <div class="term-body">
+          <pre style="margin:0 0 16px; font-family:var(--font-mono); font-size:12px; line-height:1.7; color:var(--muted); white-space:pre-wrap;"><span style="color:#5b6273;">"separator"</span>: { <span style="color:#5b6273;">"preset"</span>: <span style="color:#a6e3a1;">"chevron"</span> },
+<span style="color:#5b6273;">"segments"</span>: [
+  <span style="color:#a6e3a1;">"worktree", "cost", "model", "context",</span>
+  <span style="color:#a6e3a1;">"newline",</span>
+  <span style="color:#a6e3a1;">"git", "rate5h", "rate7d"</span>
+]</pre>
+          <div style="border-top:1px solid var(--border); margin:0 0 14px;"></div>
+          <div><span style="color:#cba6f7;">⬡ feature-x</span> <span style="color:#5b6273;">›</span> <span style="color:#e7e9ee;">$0.84</span> <span style="color:#5b6273;">›</span> <span style="color:#89dceb;">[Sonnet 5]</span> <span style="color:#5b6273;">›</span> Ctx [<span class="pxbar" aria-hidden="true" data-fill="3" data-color="green"></span>] 34%/200k</div>
+          <div style="margin-top:4px;">🌿 <span style="color:#a6e3a1;">main</span> +2 ~5 <span style="color:#5b6273;">›</span> 5h:[<span class="pxbar" aria-hidden="true" data-fill="7" data-color="yellow"></span>] 72% <span style="color:#5b6273;">›</span> 7d:[<span class="pxbar" aria-hidden="true" data-fill="3" data-color="green"></span>] 31%</div>
         </div>
       </div>
     </div>
@@ -284,7 +318,7 @@
       <div class="term">
         <div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span></div>
         <div class="term-body">
-          <div><span style="color:#5b6273;">Rate:</span> 5h:[<span class="pxbar" aria-hidden="true" data-fill="7" data-color="yellow"></span>] <span style="color:#f9e2af;">72%</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.20/h</span> <span style="color:#5b6273;">·</span> 5h out in <span style="color:#f9e2af;">~40m</span></div>
+          <div>5h:[<span class="pxbar" aria-hidden="true" data-fill="7" data-color="yellow"></span>] <span style="color:#f9e2af;">72%</span> <span style="color:#5b6273;">|</span> <span style="color:#5b6273;">$1.20/h</span> <span style="color:#5b6273;">·</span> 5h out in <span style="color:#f9e2af;">~40m</span></div>
           <div style="margin-top:10px;"><span style="color:#a6e3a1;">TTL:58m</span> <span class="dim">— cache still warm</span></div>
           <div style="margin-top:2px;"><span style="color:#f38ba8;">❄ TTL out</span> <span class="dim">— just slid past the window</span></div>
         </div>
@@ -396,6 +430,42 @@
       });
     });
   });
+
+  // GitHub star count — fetched client-side from the public, CORS-enabled
+  // REST API (no backend, keeps this a static page). Cached in localStorage
+  // for an hour so repeat visits don't chip away at the unauthenticated
+  // 60-req/hr rate limit. Fails silently on any error (network, rate limit,
+  // localStorage unavailable in private mode) — the badge just stays empty
+  // rather than showing "★ NaN" or an error state.
+  (function () {
+    var starEl = document.getElementById('gh-star-count');
+    if (!starEl || !window.fetch) return;
+    var CACHE_KEY = 'fleetline-gh-stars';
+    var CACHE_TTL = 60 * 60 * 1000;
+
+    function render(count) {
+      if (typeof count !== 'number' || !isFinite(count)) return;
+      starEl.textContent = '★ ' + count;
+    }
+
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem(CACHE_KEY)); } catch (e) { /* ignore */ }
+    if (cached && typeof cached.count === 'number' && (Date.now() - cached.ts) < CACHE_TTL) {
+      render(cached.count);
+      return;
+    }
+
+    fetch('https://api.github.com/repos/ClaudeTool/fleetline')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || typeof data.stargazers_count !== 'number') return;
+        render(data.stargazers_count);
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ count: data.stargazers_count, ts: Date.now() }));
+        } catch (e) { /* quota or private-mode — not fatal, just skip caching */ }
+      })
+      .catch(function () { /* offline, rate-limited, blocked — leave badge empty */ });
+  })();
 
   // Meta statusline: scroll progress + current section, styled like the product.
   var barEl = document.getElementById('metabar-bar');
