@@ -3,9 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>fleetline</title>
+<title>fleetline — a customizable statusline plugin for Claude Code</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314161c'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='18' font-weight='700' fill='%235fe6c4' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
-<meta name="description" content="A statusline for Claude Code that tracks background agents, predicts when your rate limit runs out, and was hardened against the injection bug most statuslines ship with.">
+<meta name="description" content="A statusline plugin for Claude Code: model, context, git, rate limits, cost burn-rate, and background-agent tracking, arranged in whatever order and separator you want. Hardened bash, no dependencies beyond jq.">
+<link rel="canonical" href="https://claudetool.github.io/fleetline/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="fleetline">
+<meta property="og:url" content="https://claudetool.github.io/fleetline/">
+<meta property="og:title" content="fleetline — a customizable statusline plugin for Claude Code">
+<meta property="og:description" content="Model, context, git, rate limits, cost burn-rate, and background-agent tracking, arranged in whatever order and separator you want. Hardened bash, no dependencies beyond jq.">
+<meta property="og:image" content="https://claudetool.github.io/fleetline/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="fleetline — a customizable statusline plugin for Claude Code">
+<meta name="twitter:description" content="Model, context, git, rate limits, cost burn-rate, and background-agent tracking, arranged in whatever order and separator you want.">
+<meta name="twitter:image" content="https://claudetool.github.io/fleetline/og-image.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "fleetline",
+  "description": "A statusline plugin for Claude Code: model, context, git, rate limits, cost burn-rate, and background-agent tracking, arranged in whatever order and separator you want.",
+  "url": "https://claudetool.github.io/fleetline/",
+  "codeRepository": "https://github.com/ClaudeTool/fleetline",
+  "programmingLanguage": "Shell",
+  "license": "https://github.com/ClaudeTool/fleetline/blob/main/LICENSE",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Linux, macOS"
+}
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@700;800&family=IBM+Plex+Sans:wght@400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">

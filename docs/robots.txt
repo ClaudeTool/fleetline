@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://claudetool.github.io/fleetline/sitemap.xml
