@@ -1,8 +1,13 @@
 {
   "name": "fleetline",
-  "description": "Pluggable Claude Code statusline — model/context/git/rate-limits/cost/burn-rate with 3 layout presets, background-agent tracking, a fleet-view row renderer, ASCII-safe mode, and a hardened bash renderer.",
-  "version": "0.2.0",
+  "displayName": "fleetline",
+  "description": "A hardened statusline for Claude Code — protected against the git-config RCE and ANSI-injection bugs most statuslines ship with. Every segment is independently repositionable with your own separator (not just theme presets), plus a fleet-view renderer for multi-agent sessions. Bash + jq only, Linux/WSL verified.",
+  "version": "1.0.0",
   "author": {
     "name": "Hai Nguyen"
-  }
+  },
+  "homepage": "https://claudetool.github.io/fleetline/",
+  "repository": "https://github.com/ClaudeTool/fleetline",
+  "license": "MIT",
+  "keywords": ["statusline", "status-line", "customizable", "security", "fleet-view", "rate-limits"]
 }

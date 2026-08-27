@@ -206,11 +206,17 @@ dev environment — not just read-and-assumed-correct):
    already passes (marketplace.json clean; plugin.json has one non-strict
    warning — CLAUDE.md at the plugin root isn't loaded as context, which
    is fine since it's intentionally dev-only, not meant to ship as
-   runtime context — the review pipeline doesn't run `--strict`). Version
-   is still pre-1.0 (0.2.0); no git release tag exists yet (`claude
-   plugin tag . --dry-run` reports it would create `fleetline--v0.2.0`).
-   Re-check for name collisions again before submitting — the landscape
-   moves.
+   runtime context — the review pipeline doesn't run `--strict`).
+   ~~Version still pre-1.0~~ — **done.** Bumped to `1.0.0` and tagged
+   `fleetline--v1.0.0` (via `claude plugin tag`, pushed to origin).
+   `plugin.json`/`marketplace.json` descriptions were also rewritten to
+   lead with what's actually different from the 8 other statusline
+   plugins already in the `claude-plugins-community` catalog (checked by
+   fetching its `marketplace.json` directly) — security hardening and
+   per-segment repositioning, not just theme presets, since several
+   competitors already claim theming/customization but none mention
+   hardening. Submission itself (the web form) still needs the repo
+   owner's own account — not something a session can do unattended.
 5. If anyone can capture a real `subagentStatusLine` payload or a real
    `SubagentStart`/`SubagentStop` hook payload from an actual multi-agent
    session, that resolves the two "not verified" items above — worth
