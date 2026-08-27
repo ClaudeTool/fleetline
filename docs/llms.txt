@@ -1,0 +1,23 @@
+# fleetline
+
+> A hardened statusline plugin for Claude Code: model, context, git, rate limits, cost burn-rate, and background-agent tracking, with every segment independently repositionable and a configurable separator — not a fixed set of theme presets.
+
+fleetline reads the JSON payload Claude Code pipes to the `statusLine`/`subagentStatusLine` command on every render and prints plain formatted text — pure bash plus `jq`, no network calls, no token cost of its own. Distributed as a Claude Code plugin (via its own marketplace and a curl-installable script) and submitted to the `claude-plugins-community` marketplace.
+
+Two things distinguish it from most other Claude Code statusline plugins: it was hardened against a `git core.fsmonitor` remote-code-execution vector and an ANSI/OSC terminal-injection vector that a naive statusline script is exposed to on every refresh (both fixed and verified at the byte level, not just visually); and its segment layout is a flat, ordered, powerlevel10k-style array (with a `newline` id to break lines) rather than a small set of built-in themes — any piece can move to any position, on however many lines you want.
+
+## Docs
+
+- [Landing page](https://claudetool.github.io/fleetline/): overview, layout gallery, install instructions
+- [README](https://github.com/ClaudeTool/fleetline#readme): full config reference, the fleet-view caveats, security write-up, and what a statusline genuinely can't see about a session
+- [Config schema](https://github.com/ClaudeTool/fleetline/blob/main/config/schema.json): every config field and its default, machine-readable
+- [CLAUDE.md](https://github.com/ClaudeTool/fleetline/blob/main/CLAUDE.md): implementation notes, what's verified vs. not, for anyone extending the project
+
+## Install
+
+- Plugin marketplace: `/plugin marketplace add ClaudeTool/fleetline` then `/plugin install fleetline` then `/statusline-setup`
+- No marketplace: `curl -fsSL https://raw.githubusercontent.com/ClaudeTool/fleetline/main/install.sh | bash`
+
+## Optional
+
+- [Source](https://github.com/ClaudeTool/fleetline): MIT-licensed, bash + jq only, Linux/WSL verified

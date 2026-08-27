@@ -8,6 +8,14 @@ A pluggable statusline for [Claude Code](https://claude.com/claude-code): model,
 $0.84 | PR #128 (review: approved) | session:refactor-auth | thinking:on | bg:2 (w:1 b:1) | TTL:58m
 ```
 
+## What's different here
+
+The `claude-plugins-community` catalog already has several statusline plugins (theming, live metrics, cost tracking — that space is genuinely crowded). Checked their listed descriptions before writing this section, so this is scoped to what's actually distinct rather than a restated feature list:
+
+- **Segment layout is a flat, ordered array with a `newline` id** — modeled on [powerlevel10k](https://github.com/romkatv/powerlevel10k)'s `POWERLEVEL9K_LEFT_PROMPT_ELEMENTS`, not a fixed set of built-in themes. Any segment, any position, any number of lines — see [Custom segment order](#custom-segment-order) below. Several other statusline plugins advertise theming; none currently describe per-segment repositioning at this granularity.
+- **Hardened against two real vulnerability classes**, not just styled: a `git core.fsmonitor` remote-code-execution vector (a cloned repo can declare an arbitrary command that runs on every `git status`/`diff` — and a statusline re-runs those on every refresh, so a malicious repo as your cwd would re-trigger it indefinitely) and ANSI/OSC terminal injection via `printf '%b'` (a crafted `model.display_name` or `git_worktree` could repaint your terminal or trigger clipboard writes). Both fixed and verified at the byte level — see [Security](#security).
+- **Zero token cost of its own** — pure bash + `jq` reading the JSON Claude Code already pipes to the `statusLine` command; no API calls, no network calls except the one opt-in `claude agents --json` poll (off by default, throttled when on).
+
 ## Install
 
 ### Option A — plugin marketplace (recommended)
