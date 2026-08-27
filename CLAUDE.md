@@ -193,9 +193,24 @@ dev environment — not just read-and-assumed-correct):
    If you add new user-facing strings anywhere in `bin/` or `install.sh`,
    keep them English — this project's audience-facing surface (README,
    plugin.json, landing page) is English throughout.
-4. Once live and stable, consider a PR to the official
-   `claude-plugins-official` marketplace — re-check for name collisions
-   again first, the landscape moves.
+4. ~~Consider a PR to the official `claude-plugins-official`
+   marketplace~~ — **wrong assumption, corrected.** Verified against
+   code.claude.com/docs/en/plugins: `claude-plugins-official` has no
+   application process at all — Anthropic curates it entirely at its own
+   discretion, no PR, no form. The real path is submitting to
+   `claude-plugins-community` (a different, community-review marketplace)
+   via the in-app form — platform.claude.com/plugins/submit for an
+   individual author (not part of a Team/Enterprise org), or
+   claude.ai/admin-settings/directory/submissions/plugins/new for a
+   Team/Enterprise org's directory managers. `claude plugin validate .`
+   already passes (marketplace.json clean; plugin.json has one non-strict
+   warning — CLAUDE.md at the plugin root isn't loaded as context, which
+   is fine since it's intentionally dev-only, not meant to ship as
+   runtime context — the review pipeline doesn't run `--strict`). Version
+   is still pre-1.0 (0.2.0); no git release tag exists yet (`claude
+   plugin tag . --dry-run` reports it would create `fleetline--v0.2.0`).
+   Re-check for name collisions again before submitting — the landscape
+   moves.
 5. If anyone can capture a real `subagentStatusLine` payload or a real
    `SubagentStart`/`SubagentStop` hook payload from an actual multi-agent
    session, that resolves the two "not verified" items above — worth

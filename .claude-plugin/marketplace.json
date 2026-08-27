@@ -1,5 +1,6 @@
 {
   "name": "fleetline-marketplace",
+  "description": "Marketplace for fleetline, a pluggable statusline plugin for Claude Code.",
   "owner": {
     "name": "Hai Nguyen"
   },
