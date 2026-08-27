@@ -9,7 +9,7 @@
       "type": "string",
       "enum": ["minimal", "hardened", "power"],
       "default": "hardened",
-      "description": "minimal = 1 line (model/context/git). hardened = 2 lines, matches the original model/context/lines/git + rate-limits layout. power = adds a 3rd line with cost/session/PR/effort/thinking/bg-agents/cache-TTL, each shown only when the underlying field is present in that turn's payload."
+      "description": "minimal = 1 line (model/context/git). hardened = 2 lines, matches the original model/context/lines/git + rate-limits layout. power = adds a 3rd line with cost/session/PR/thinking/bg-agents/cache-TTL, each shown only when the underlying field is present in that turn's payload. Only sets each line's DEFAULT segment order — see `segments` to override which pieces render, and in what order, on any line."
     },
     "asciiMode": {
       "type": "boolean",
@@ -60,7 +60,7 @@
         "widthAwareTruncate": {
           "type": "boolean",
           "default": true,
-          "description": "If a rendered line would exceed the terminal width ($COLUMNS, else `tput cols`, else 120 as a last resort), drop the least-important pieces from the end instead of letting the terminal hard-wrap mid-line. Order dropped first: idle indicator, vim mode, output style, add-dir count, worktree (line 1); cache-TTL, bg-agents, thinking, session name (line 3)."
+          "description": "If a rendered line would exceed the terminal width ($COLUMNS, else `tput cols`, else 120 as a last resort), drop the least-important pieces from the end instead of letting the terminal hard-wrap mid-line. Order dropped first: idle indicator, vim mode, output style, add-dir count, git status, lines-changed, context bar (line 1 — the worktree segment leads line 1 and is dropped last, right before model name); cache-TTL, bg-agents, thinking, session name (line 3)."
         },
         "outputStyleSegment": {
           "type": "boolean",
@@ -104,6 +104,28 @@
           "type": "boolean",
           "default": false,
           "description": "Fills the gap between polls with a much cheaper, approximate count maintained by hooks/hooks.json (SubagentStart/SubagentStop), shown with a leading '~'. Requires: (1) the plugin's hooks are only loaded by a NEW Claude Code session — restart after enabling; (2) can drift high if a subagent is killed without firing SubagentStop, self-corrected at the next bgAgentSegment poll; (3) not available via the curl install.sh path, only the plugin path."
+        }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "A FLAT ordered list of segment ids — modeled after powerlevel10k's POWERLEVEL9K_LEFT_PROMPT_ELEMENTS — that takes over rendering entirely in place of `layout`'s built-in default lines when present (even `[]`, which renders nothing). One reserved id, `\"newline\"`, breaks to a new rendered line wherever it appears; everything between two `newline`s (or the array's start/end) renders as one line, in that order. Any real segment id can appear anywhere, any number of times, on however many lines you define — there's no fixed line count. Segment ids: worktree, model, context, linesChanged, git, addDir, outputStyle, vim, idle, rate5h, rate7d, burnRate, cost, pr, sessionName, thinking, agents, cacheTtl (full description of each in README.md). A `features.*`/`agents.*` toggle still gates whether the underlying segment has any value at all — `segments` only controls inclusion/position/line-grouping among segments that do. Width-aware truncation drops from the END of each resolved line, so a segment's position also sets its truncation priority within its line (leftmost survives longest). Example: `[\"worktree\",\"model\",\"context\",\"newline\",\"rate5h\",\"rate7d\"]` renders worktree/model/context on line 1 and the two rate bars on line 2."
+    },
+    "separator": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The glyph placed between segments on the same line (default: a plain pipe, matching the pre-1.0 fixed look).",
+      "properties": {
+        "preset": {
+          "type": "string",
+          "enum": ["pipe", "dot", "chevron", "bar", "diamond", "custom"],
+          "default": "pipe",
+          "description": "pipe `|`, dot `·`, chevron `›`, bar `│`, diamond `◆` — each has an ASCII-safe fallback used automatically when `asciiMode` is on (`|`, `.`, `>`, `|`, `*` respectively). `custom` uses the `custom` field verbatim (in both ASCII and normal mode — you're on your own for an ASCII-safe version if you need one)."
+        },
+        "custom": {
+          "type": "string",
+          "description": "The exact glyph(s) to use when `preset` is `\"custom\"`; ignored otherwise. Padded with one space on each side automatically, same as every preset."
         }
       }
     }

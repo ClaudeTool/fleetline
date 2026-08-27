@@ -3,9 +3,9 @@
 A pluggable statusline for [Claude Code](https://claude.com/claude-code): model, context, git, rate limits, cost burn-rate, and background-agent tracking — three layout presets, an ASCII-safe mode, a hardened bash renderer, and a second surface that renders rows in the multi-agent fleet view.
 
 ```
-[Sonnet 5] v2.1.4 | Ctx [███░░░░░░░] 34%/200k | +120/-45 | ⬡ feature-x | 🌿 main +2 ~5
+⬡ feature-x | [Sonnet 5] v2.1.4 | Ctx [███░░░░░░░] 34%/200k | +120/-45 | 🌿 main +2 ~5
 Rate: 5h:[███████░░░] 72% (↻ Fri 21/08 09:00) | 7d:[███░░░░░░░] 31% (↻ Tue 25/08 00:00) | $1.20/h · 5h out in ~40m
-$0.842 | PR #128 (review: approved) | effort:high | session:refactor-auth | thinking:on | bg:2 (w:1 b:1) | TTL:58m
+$0.84 | PR #128 (review: approved) | session:refactor-auth | thinking:on | bg:2 (w:1 b:1) | TTL:58m
 ```
 
 ## Install
@@ -46,7 +46,7 @@ Writes the script to `~/.claude/statusline-command.sh` and merges `statusLine` i
 |---|---|---|
 | `minimal` | 1 | model, context bar, git branch |
 | `hardened` | 2 | + version, lines added/removed, worktree, rate limits (Pro/Max only), burn-rate, small feature bundle |
-| `power` | 3 | + cost, PR, effort, session name, thinking mode, background-agent count, cache-TTL |
+| `power` | 3 | + cost, PR, session name, thinking mode, background-agent count, cache-TTL |
 
 ## Config
 
@@ -78,10 +78,73 @@ Writes the script to `~/.claude/statusline-command.sh` and merges `statusLine` i
 - **`thresholds`** governs the context bar, both rate-limit bars, and each per-task context bar in the fleet view.
 - **`hints.compactHint`** appends a red `· /compact?` to the context segment once usage crosses `crit`, in every layout.
 - **`features.burnRate`** shows `$/h` plus an ETA to exhaust the 5h rate-limit window, from two samples at least 30s apart — nothing shows until a second sample exists.
-- **`features.widthAwareTruncate`** drops the least-important pieces (worktree, idle indicator, vim/output-style, add-dir count on line 1; cache-TTL, bg-agents, thinking, session name on line 3) instead of letting the terminal hard-wrap when a line would exceed `$COLUMNS`/`tput cols`/120 (whichever resolves).
+- **`features.widthAwareTruncate`** drops the least-important pieces (idle indicator, vim/output-style, add-dir count, git status, lines-changed, context bar on line 1 — the leading worktree segment is dropped last, right before the model name; cache-TTL, bg-agents, thinking, session name on line 3) instead of letting the terminal hard-wrap when a line would exceed `$COLUMNS`/`tput cols`/120 (whichever resolves).
 - **`features.clickableLinks`** wraps the git branch and PR number in OSC-8 hyperlinks, built only from `workspace.repo.host/owner/name` + the branch/PR number after a strict charset check — never from free-text fields. Off by default (OSC-8 support isn't universal).
 - **`agents.bgAgentSegment`** shows `bg:N (w:.. b:..)` from `claude agents --json --cwd <cwd>`, throttled by `agents.bgAgentPollSeconds` since each poll spawns a full CLI process (~0.4s observed). Off by default.
 - **`agents.hookCounterEnabled`** fills the gap between polls with a `~N` estimate from `hooks/hooks.json` (SubagentStart/SubagentStop) — plugin-only, requires restarting Claude Code to load, can drift high if a subagent is killed abnormally (self-corrects at the next poll). **Unverified assumption:** the hook script keys its counter file by the `session_id` in the *hook's own* payload, and `bin/statusline.sh` reads it back keyed by the *main session's* `session_id`; this only works if Claude Code reports the same `session_id` to a `SubagentStart`/`SubagentStop` hook as it does to the main session's statusline. If it instead reports the spawned subagent's own id, the two never match and this flag silently does nothing beyond the `bgAgentSegment` poll (no crash, no error — you just never see the `~N` in between polls). Not verified against a real hook payload; if you can confirm either way, please report it.
+
+## Custom segment order
+
+Every rendered piece has a short id. By default each line's content and order comes from `layout` (see the table above), but `segments` replaces that entirely with a **flat, ordered list of ids** — the same shape as [powerlevel10k](https://github.com/romkatv/powerlevel10k)'s `POWERLEVEL9K_LEFT_PROMPT_ELEMENTS`: one array, any id anywhere, any number of times, and a reserved `"newline"` id wherever you want to break to the next line:
+
+```json
+{
+  "layout": "power",
+  "segments": [
+    "worktree", "model", "context", "linesChanged", "git", "addDir",
+    "newline",
+    "rate5h", "rate7d", "burnRate",
+    "newline",
+    "cost", "pr", "sessionName", "thinking", "agents", "cacheTtl"
+  ]
+}
+```
+
+That example reproduces `power`'s default 3-line layout — but nothing pins you to 3 lines, or to putting each id only once. `segments`, once present at all (even `[]`, which renders nothing), replaces every line — there's no partial per-line override once you opt in. An id not listed anywhere just doesn't render. A `features.*`/`agents.*` toggle still gates whether a segment ever has a value at all (e.g. `features.vimModeSegment: false` keeps `vim` empty even if you list it) — `segments` only controls inclusion/position/line-grouping among segments that do. `features.widthAwareTruncate` drops from the **end** of *each resolved line* when it's too wide for the terminal, so position within a line also doubles as truncation priority — put what you don't want dropped first on that line.
+
+Note: with custom `segments`, the old fixed `Rate: ` label prefix is gone — `5h:`/`7d:` are self-labeled per-segment instead, since a line-wide label doesn't make sense once rate segments can move to any line. The separator between segments on a line is also configurable — see `separator` below.
+
+### Segment separator
+
+`separator.preset` swaps the glyph placed between segments (default `pipe`, i.e. the original ` | ` look):
+
+```json
+{ "separator": { "preset": "dot" } }
+```
+
+| preset | normal | `asciiMode` |
+|---|---|---|
+| `pipe` (default) | `\|` | `\|` |
+| `dot` | `·` | `.` |
+| `chevron` | `›` | `>` |
+| `bar` | `│` | `\|` |
+| `diamond` | `◆` | `*` |
+| `custom` | whatever `separator.custom` says | same (no auto ASCII fallback for a custom glyph) |
+
+```json
+{ "separator": { "preset": "custom", "custom": "~>" } }
+```
+
+| id | Piece | Notes |
+|---|---|---|
+| `worktree` | `⬡ <name>` | Only non-empty when `workspace.git_worktree` is set |
+| `model` | `[Sonnet 5] v2.1.4` | Version suffix only shown outside `minimal` |
+| `context` | `Ctx [███░░░░░░░] 34%/200k` | |
+| `linesChanged` | `+120/-45` | |
+| `git` | `🌿 main +2 ~5` | Skipped if `git` isn't installed or cwd isn't a repo |
+| `addDir` | `+2 dir` | `features.addDirSegment` |
+| `outputStyle` | `style:explanatory` | `features.outputStyleSegment` |
+| `vim` | `vim:NORMAL` | `features.vimModeSegment` |
+| `idle` | `idle 7m` | `features.idleIndicator`, `hints.idleThresholdMin` |
+| `rate5h` | `5h:[███████░░░] 72% (↻ ...)` | Only present on plans that expose `rate_limits` |
+| `rate7d` | `7d:[███░░░░░░░] 31% (↻ ...)` | Same |
+| `burnRate` | `$1.20/h · 5h out in ~40m` | `features.burnRate` |
+| `cost` | `$1.17` | Rounded to 2 decimals |
+| `pr` | `PR #128 (review: approved)` | |
+| `sessionName` | `session:refactor-auth` | |
+| `thinking` | `thinking:on` | |
+| `agents` | `bg:2 (w:1 b:1)` | `agents.bgAgentSegment` |
+| `cacheTtl` | `TTL:58m` | See below |
 
 ## The cache-TTL segment (power layout)
 
@@ -99,7 +162,8 @@ Most of Claude Code's `/config` toggles have no corresponding field in the statu
 
 | `/config` setting | Visible to statusline? |
 |---|---|
-| Model, effort, output style, vim mode, extended thinking | ✅ yes (used above) |
+| Model, output style, vim mode, extended thinking | ✅ yes (used above) |
+| Effort level | ✅ present in the payload, but deliberately not rendered — Claude Code already shows it natively, so a duplicate `effort:` segment was removed |
 | **Permission mode** (Shift+Tab: default/acceptEdits/plan/bypass) | ❌ no dedicated field. *Can* be read by tailing `transcript_path` for the last `permissionMode`, but that's stale right at the moment you switch modes, and Claude Code already shows a native ⏸ badge for manual mode — not worth the duplication, deliberately not built here. |
 | Auto-compact, auto-scroll, session recap, notifications, checkpointing/rewind, prompt suggestions, artifacts | ❌ no field, no workaround found |
 

@@ -29,7 +29,18 @@ bin/lib.sh                    shared helpers — colors, sanitize(), cfg_bool(),
                                draw_bar()/rate_bar(), fit_line() (width-aware
                                truncation), OSC-8 link builders. Sourced by
                                both scripts below; not executed directly.
-bin/statusline.sh             the main statusLine renderer (1-3 lines)
+bin/statusline.sh             the main statusLine renderer (1-N lines, no
+                               fixed count). Every piece is computed into a
+                               *_SEG/*_PART variable, looked up by id via
+                               segment_value(). Lines come from either the
+                               layout's built-in default (3 fixed presets) or
+                               the config's `segments` override — a FLAT
+                               ordered id array with a reserved "newline" id
+                               to break lines, modeled after powerlevel10k's
+                               POWERLEVEL9K_LEFT_PROMPT_ELEMENTS — see
+                               "Custom segment order" in README.md. The
+                               separator glyph between segments is also
+                               config-driven (`separator.preset`/`.custom`).
 bin/subagent-statusline.sh    the subagentStatusLine renderer (fleet/agent
                                panel view) — LEAST-VERIFIED file, see below
 hooks/hooks.json + agent-count.sh   optional SubagentStart/Stop counter,
@@ -149,6 +160,19 @@ dev environment — not just read-and-assumed-correct):
   in README; not resolved either way.
 - Never tested on macOS (ships bash 3.2 by default) or native Windows.
   Linux/WSL only so far.
+- `rate_flicker_guard()` in `bin/statusline.sh` — added to mitigate a
+  reported symptom (5h/7d `used_percentage` occasionally reads ~0 for one
+  render mid-window, then jumps back up next render). Root cause was never
+  confirmed — no one captured the raw stdin payload from an actual
+  occurrence, so it's unknown whether this is a Claude Code payload glitch,
+  a race in how `rate_limits` gets populated, or something else. The fix is
+  a debounce (require two consecutive low readings before trusting a drop
+  from >5% down to ~0), verified only with synthetic payloads
+  (`test-session-*` runs, not a captured real one) — see "How testing was
+  actually done" below for the exact synthetic sequence used. If real
+  flicker recurs after this, the debounce's 2-reading window may be too
+  short (or the root cause may be something this can't catch at all) —
+  worth capturing a real payload before iterating further.
 
 ## Open TODOs for whoever picks this up next
 
@@ -156,11 +180,9 @@ dev environment — not just read-and-assumed-correct):
    real account is `ClaudeTool` (github.com/ClaudeTool/fleetline);
    `docs/index.html`'s hardcoded links now point there.
 2. ~~No git remote configured~~ — **done.** `origin` is
-   `git@github.com:ClaudeTool/fleetline.git`, pushed to `main`. Still
-   **outstanding**: enable GitHub Pages (Settings → Pages → Deploy from
-   branch → `main` → `/docs`) to actually publish `docs/index.html` —
-   that step needs to be done from the GitHub web UI, not from a
-   session.
+   `git@github.com:ClaudeTool/fleetline.git`, pushed to `main`.
+   ~~Enable GitHub Pages~~ — **done.** Source is `main` / `/docs`,
+   status `built`, live at https://claudetool.github.io/fleetline/.
 3. ~~Mixed Vietnamese/English strings~~ — **done.** `bin/statusline.sh`
    had two Vietnamese fragments hardcoded into real output regardless of
    config (the jq-missing message, the cache-TTL-expired marker `❄ TTL
@@ -190,6 +212,21 @@ to override the config path per test without touching `~/.claude/`:
 ```bash
 echo '{"model":{"display_name":"Sonnet 5"},"workspace":{"current_dir":"/some/git/repo"},"context_window":{"used_percentage":34,"context_window_size":200000},"cost":{}}' \
   | STATUSLINE_CONFIG=/tmp/test-cfg.json bash bin/statusline.sh
+```
+
+For stateful per-session behavior (burn-rate, cache-TTL, the rate-limit
+flicker guard), reuse the same `session_id` across multiple piped-in
+payloads in sequence — state lives in `~/.claude/cache-state/<session_id>.*`
+between renders, so a single-shot test can't exercise it. Use a throwaway
+id and clean up after:
+
+```bash
+SID="test-session-$$"
+echo '{"session_id":"'"$SID"'","rate_limits":{"five_hour":{"used_percentage":45,"resets_at":1234}}}' \
+  | STATUSLINE_CONFIG=/tmp/test-cfg.json bash bin/statusline.sh   # establishes confirmed=45
+echo '{"session_id":"'"$SID"'","rate_limits":{"five_hour":{"used_percentage":0,"resets_at":1234}}}' \
+  | STATUSLINE_CONFIG=/tmp/test-cfg.json bash bin/statusline.sh   # single dip -> still shows 45
+rm -f "$HOME/.claude/cache-state/${SID}".*
 ```
 
 For anything security-relevant, verify at the byte level with Python
